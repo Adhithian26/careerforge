@@ -1,0 +1,29 @@
+.gcloudignore
+.git
+.gitignore
+
+# Python
+cf/
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+.pytest_cache/
+
+# Node
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.vite/
+frontend/.vite/
+
+# Secrets
+.env
+.env.local
+service-account*.json
+credentials.json
+*.pem

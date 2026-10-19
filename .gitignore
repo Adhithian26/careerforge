@@ -18,6 +18,7 @@ build/
 # Environment Variables & Secrets
 .env
 .env.local
+.env.production
 *.pem
 service-account*.json
 credentials.json

@@ -16,7 +16,12 @@ import {
   InterviewSession
 } from '../types';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE =
+  (typeof window !== 'undefined' && (window as any).__CAREERFORGE_API_BASE__) ||
+  (import.meta.env.VITE_API_BASE as string) ||
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:8000/api/v1'
+    : '/api/v1');
 
 export const authStorage = {
   getToken: () => localStorage.getItem('careerforge_token'),
