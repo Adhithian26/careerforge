@@ -34,3 +34,6 @@ services:
       - type: rewrite
         source: "/*"
         destination: "/index.html"
+    envVars:
+      - key: VITE_API_BASE
+        value: https://careerforge-backend.onrender.com/api/v1
