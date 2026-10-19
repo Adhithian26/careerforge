@@ -1,0 +1,50 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: careerforge-backend
+  labels:
+    cloud.googleapis.com/location: us-central1
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "3"
+        run.googleapis.com/cpu-throttling: "true"
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      containers:
+      - image: gcr.io/PROJECT_ID/careerforge-backend:latest
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+        ports:
+        - name: http1
+          containerPort: 8080
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: DEBUG
+          value: "False"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: careerforge-secrets
+              key: database-url
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: careerforge-secrets
+              key: secret-key
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: careerforge-secrets
+              key: gemini-api-key
+        - name: MCP_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: careerforge-secrets
+              key: mcp-auth-token
