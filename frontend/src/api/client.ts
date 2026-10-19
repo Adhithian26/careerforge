@@ -17,23 +17,35 @@ import {
 } from '../types';
 
 export function getApiBase(): string {
+  let base = 'https://careerforge-backend-psvc.onrender.com/api/v1';
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('careerforge_api_base');
-    if (saved) return saved;
-    if ((window as any).__CAREERFORGE_API_BASE__) return (window as any).__CAREERFORGE_API_BASE__;
+    if (saved) {
+      base = saved;
+    } else if ((window as any).__CAREERFORGE_API_BASE__) {
+      base = (window as any).__CAREERFORGE_API_BASE__;
+    } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      base = 'http://localhost:8000/api/v1';
+    }
   }
   if (import.meta.env.VITE_API_BASE) {
-    return import.meta.env.VITE_API_BASE as string;
+    base = import.meta.env.VITE_API_BASE as string;
   }
-  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    return 'http://localhost:8000/api/v1';
+
+  base = base.trim().replace(/\/+$/, '');
+  if (!base.endsWith('/api/v1')) {
+    base = `${base}/api/v1`;
   }
-  return 'https://careerforge-backend-psvc.onrender.com/api/v1';
+  return base;
 }
 
 export function setApiBase(url: string) {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('careerforge_api_base', url.trim().replace(/\/+$/, ''));
+    let clean = url.trim().replace(/\/+$/, '');
+    if (!clean.endsWith('/api/v1')) {
+      clean = `${clean}/api/v1`;
+    }
+    localStorage.setItem('careerforge_api_base', clean);
   }
 }
 

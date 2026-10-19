@@ -196,20 +196,26 @@ def health_check():
         "environment": settings.ENVIRONMENT
     }
 
-# Mount all API V1 Routers
-app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
-app.include_router(profile_router, prefix=settings.API_V1_PREFIX)
-app.include_router(dashboard_router, prefix=settings.API_V1_PREFIX)
-app.include_router(assessment_router, prefix=settings.API_V1_PREFIX)
-app.include_router(coding_router, prefix=settings.API_V1_PREFIX)
-app.include_router(sql_router, prefix=settings.API_V1_PREFIX)
-app.include_router(interview_router, prefix=settings.API_V1_PREFIX)
-app.include_router(planner_router, prefix=settings.API_V1_PREFIX)
-app.include_router(jobs_router, prefix=settings.API_V1_PREFIX)
-app.include_router(resume_router, prefix=settings.API_V1_PREFIX)
-app.include_router(weekly_router, prefix=settings.API_V1_PREFIX)
-app.include_router(coach_router, prefix=settings.API_V1_PREFIX)
-app.include_router(mcp_router, prefix=settings.API_V1_PREFIX)
+# Mount all API Routers under both /api/v1 and root /
+all_routers = [
+    auth_router,
+    profile_router,
+    dashboard_router,
+    assessment_router,
+    coding_router,
+    sql_router,
+    interview_router,
+    planner_router,
+    jobs_router,
+    resume_router,
+    weekly_router,
+    coach_router,
+    mcp_router
+]
+
+for r in all_routers:
+    app.include_router(r, prefix=settings.API_V1_PREFIX)
+    app.include_router(r)
 
 if __name__ == "__main__":
     import uvicorn
