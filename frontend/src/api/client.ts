@@ -16,12 +16,26 @@ import {
   InterviewSession
 } from '../types';
 
-const API_BASE =
-  (typeof window !== 'undefined' && (window as any).__CAREERFORGE_API_BASE__) ||
-  (import.meta.env.VITE_API_BASE as string) ||
-  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:8000/api/v1'
-    : '/api/v1');
+export function getApiBase(): string {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('careerforge_api_base');
+    if (saved) return saved;
+    if ((window as any).__CAREERFORGE_API_BASE__) return (window as any).__CAREERFORGE_API_BASE__;
+  }
+  if (import.meta.env.VITE_API_BASE) {
+    return import.meta.env.VITE_API_BASE as string;
+  }
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:8000/api/v1';
+  }
+  return 'https://careerforge-backend.onrender.com/api/v1';
+}
+
+export function setApiBase(url: string) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('careerforge_api_base', url.trim().replace(/\/+$/, ''));
+  }
+}
 
 export const authStorage = {
   getToken: () => localStorage.getItem('careerforge_token'),
@@ -45,23 +59,31 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const base = getApiBase();
+  try {
+    const response = await fetch(`${base}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    let errorDetail = 'An error occurred';
-    try {
-      const errJson = await response.json();
-      errorDetail = errJson.detail || errJson.error || JSON.stringify(errJson);
-    } catch {
-      errorDetail = response.statusText;
+    if (!response.ok) {
+      let errorDetail = 'An error occurred';
+      try {
+        const errJson = await response.json();
+        errorDetail = errJson.detail || errJson.error || JSON.stringify(errJson);
+      } catch {
+        errorDetail = `${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorDetail);
     }
-    throw new Error(errorDetail);
-  }
 
-  return response.json();
+    return response.json();
+  } catch (err: any) {
+    if (err.name === 'TypeError' && err.message.toLowerCase().includes('fetch')) {
+      throw new Error(`Cannot reach backend server at: ${base}. Verify backend is live.`);
+    }
+    throw err;
+  }
 }
 
 export const api = {

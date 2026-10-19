@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, ShieldCheck, CheckCircle2, User, Lock, Mail } from 'lucide-react';
-import { api } from '../api/client';
+import { api, getApiBase, setApiBase } from '../api/client';
 
 interface LoginOnboardingProps {
   onSuccess: () => void;
@@ -17,6 +17,26 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
   const [targetCompanies, setTargetCompanies] = useState('Zoho, TCS, Amazon, Google, PayPal');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [showServerConfig, setShowServerConfig] = useState(false);
+  const [serverUrl, setServerUrl] = useState(getApiBase());
+  const [serverStatus, setServerStatus] = useState<string | null>(null);
+
+  const testServerConnection = async () => {
+    setServerStatus('Testing connection...');
+    try {
+      const cleanUrl = serverUrl.trim().replace(/\/+$/, '');
+      setApiBase(cleanUrl);
+      const res = await fetch(`${cleanUrl}/health`);
+      if (res.ok) {
+        setServerStatus('✅ Connected to CareerForge Backend (Healthy)');
+      } else {
+        setServerStatus(`⚠️ Server returned HTTP ${res.status}`);
+      }
+    } catch (e: any) {
+      setServerStatus(`❌ Connection failed: ${e.message || 'Offline'}`);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,6 +245,48 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
           >
             Use Default Profile: student@careerforge.ai
           </button>
+        </div>
+
+        {/* Server Endpoint Configurator */}
+        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setShowServerConfig(!showServerConfig)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            {showServerConfig ? 'Hide API Server Settings' : 'Configure Backend API Endpoint'}
+          </button>
+
+          {showServerConfig && (
+            <div style={{ marginTop: '0.75rem', padding: '0.85rem', background: 'rgba(0,0,0,0.35)', borderRadius: 'var(--radius-sm)', textAlign: 'left', border: '1px solid var(--border-subtle)' }}>
+              <label style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
+                Backend API URL:
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem', width: '100%' }}
+                value={serverUrl}
+                onChange={(e) => setServerUrl(e.target.value)}
+                placeholder="https://your-backend.onrender.com/api/v1"
+              />
+              <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={testServerConnection}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '0.72rem', padding: '0.3rem 0.6rem' }}
+                >
+                  Test & Save
+                </button>
+                {serverStatus && (
+                  <span style={{ fontSize: '0.72rem', color: serverStatus.startsWith('✅') ? '#86efac' : '#fca5a5' }}>
+                    {serverStatus}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
