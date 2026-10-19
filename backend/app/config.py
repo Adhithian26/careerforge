@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     
     # AI / Gemini
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-flash-lite-latest"
     DEFAULT_AI_PROVIDER: str = "gemini"
     
     # MCP
