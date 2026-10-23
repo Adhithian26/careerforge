@@ -14,10 +14,12 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # Comma-separated or list of allowed origins
-    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173"
+    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,https://careerforge-drab.vercel.app,*"
     
     # Database
     DATABASE_URL: str = "sqlite:///./careerforge.db"
+    MONGODB_URL: str = ""
+    MONGODB_DB_NAME: str = "careerforge"
     
     # Security
     SECRET_KEY: str = "local_development_careerforge_secret_key_2026_safe"

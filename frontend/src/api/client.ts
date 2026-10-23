@@ -17,7 +17,7 @@ import {
 } from '../types';
 
 export function getApiBase(): string {
-  let base = 'https://careerforge-backend-psvc.onrender.com/api/v1';
+  let base = 'https://careerforge-3s9a.onrender.com/api/v1';
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('careerforge_api_base');
     if (saved) {

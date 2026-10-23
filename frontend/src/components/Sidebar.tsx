@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Settings,
   LogOut,
-  Sparkles
+  Sparkles,
+  X
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -48,15 +49,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`} aria-label="Main Navigation">
       <div className="sidebar-header">
-        <div className="brand-icon">
-          <Sparkles size={20} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div className="brand-icon">
+            <Sparkles size={20} />
+          </div>
+          <div className="brand-text">
+            <h1>CareerForge AI</h1>
+            <span>B.Tech AI & DS • 2027</span>
+          </div>
         </div>
-        <div className="brand-text">
-          <h1>CareerForge AI</h1>
-          <span>B.Tech AI & DS • 2027</span>
-        </div>
+        <button
+          className="sidebar-close-btn"
+          onClick={onClose}
+          aria-label="Close navigation menu"
+          title="Close Menu"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       <nav className="sidebar-nav">

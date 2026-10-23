@@ -28,6 +28,17 @@ export const App: React.FC = () => {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.classList.add('sidebar-open-locked');
+    } else {
+      document.body.classList.remove('sidebar-open-locked');
+    }
+    return () => {
+      document.body.classList.remove('sidebar-open-locked');
+    };
+  }, [sidebarOpen]);
+
   const checkAuth = async () => {
     const token = authStorage.getToken();
     if (token) {
@@ -40,15 +51,7 @@ export const App: React.FC = () => {
         setIsAuthenticated(false);
       }
     } else {
-      // Auto-login with default seeded personal account for immediate frictionless access
-      try {
-        const authData = await api.login('student@careerforge.ai', 'CareerForge2027!');
-        const user = await api.getMe();
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-      } catch {
-        setIsAuthenticated(false);
-      }
+      setIsAuthenticated(false);
     }
     setInitializing(false);
   };
@@ -85,6 +88,13 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-container">
+      {/* Mobile Slide Navigation Backdrop */}
+      <div
+        className={`sidebar-backdrop ${sidebarOpen ? 'active' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden={!sidebarOpen}
+      />
+
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}

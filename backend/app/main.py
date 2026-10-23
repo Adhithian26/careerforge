@@ -46,18 +46,27 @@ def seed_initial_workspace_data():
         from backend.app.models.job_tracker import JobApplication
 
         # 1. Seed or retrieve personal student user
-        personal_email = "student@careerforge.ai"
+        personal_email = "adhithian260506@gmail.com"
         user = db.query(User).filter(User.email == personal_email).first()
         if not user:
-            logger.info("Seeding initial student profile...")
-            user = User(
-                email=personal_email,
-                hashed_password=hash_password("CareerForge2027!"),
-                full_name="Adhithian S",
-                is_admin=True
-            )
-            db.add(user)
-            db.flush()
+            # Check if legacy student@careerforge.ai exists to migrate
+            legacy_user = db.query(User).filter(User.email == "student@careerforge.ai").first()
+            if legacy_user:
+                logger.info("Migrating legacy profile to adhithian260506@gmail.com...")
+                legacy_user.email = personal_email
+                legacy_user.hashed_password = hash_password("Adhi@2656")
+                db.commit()
+                user = legacy_user
+            else:
+                logger.info("Seeding initial student profile for adhithian260506@gmail.com...")
+                user = User(
+                    email=personal_email,
+                    hashed_password=hash_password("Adhi@2656"),
+                    full_name="Adhithian S",
+                    is_admin=True
+                )
+                db.add(user)
+                db.flush()
 
             profile = UserProfile(
                 user_id=user.id,
@@ -153,9 +162,15 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting CareerForge AI Backend Engine...")
     seed_initial_workspace_data()
+    from backend.app.mongodb import ping_mongodb, close_mongodb_connection
+    if await ping_mongodb():
+        logger.info("MongoDB Atlas cluster connected successfully.")
+    else:
+        logger.info("MongoDB Atlas connection disabled or unavailable.")
     yield
     # Shutdown
     logger.info("Shutting down CareerForge AI Backend Engine.")
+    close_mongodb_connection()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -187,13 +202,16 @@ else:
 # Health Check Endpoints
 @app.get("/health")
 @app.get(f"{settings.API_V1_PREFIX}/health")
-def health_check():
+async def health_check():
     """Health check endpoint for Docker container and Google Cloud Run deployment."""
+    from backend.app.mongodb import ping_mongodb
+    mongo_ok = await ping_mongodb()
     return {
         "status": "healthy",
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
-        "environment": settings.ENVIRONMENT
+        "environment": settings.ENVIRONMENT,
+        "mongodb": "connected" if mongo_ok else "disabled"
     }
 
 # Mount all API Routers under both /api/v1 and root /

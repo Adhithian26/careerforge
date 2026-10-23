@@ -1,5 +1,21 @@
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, ShieldCheck, CheckCircle2, User, Lock, Mail } from 'lucide-react';
+import {
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
+  User,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  GraduationCap,
+  Briefcase,
+  Clock,
+  Server,
+  Zap,
+  Check
+} from 'lucide-react';
 import { api, getApiBase, setApiBase } from '../api/client';
 
 interface LoginOnboardingProps {
@@ -8,8 +24,9 @@ interface LoginOnboardingProps {
 
 export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) => {
   const [isRegister, setIsRegister] = useState(false);
-  const [email, setEmail] = useState('student@careerforge.ai');
-  const [password, setPassword] = useState('CareerForge2027!');
+  const [email, setEmail] = useState('adhithian260506@gmail.com');
+  const [password, setPassword] = useState('Adhi@2656');
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('Adhithian S');
   const [degree, setDegree] = useState('B.Tech Artificial Intelligence and Data Science');
   const [graduationYear, setGraduationYear] = useState(2027);
@@ -46,9 +63,9 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
     try {
       if (isRegister) {
         await api.register({
-          email,
+          email: email.trim(),
           password,
-          full_name: fullName,
+          full_name: fullName.trim(),
           degree,
           graduation_year: graduationYear,
           daily_study_hours: studyHours,
@@ -58,235 +75,286 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
           dsa_confidence: 1
         });
       } else {
-        await api.login(email, password);
+        await api.login(email.trim(), password);
       }
       onSuccess();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Authentication error.');
+      setErrorMessage(err.message || 'Authentication failed. Please check credentials or backend server.');
     } finally {
       setLoading(false);
     }
   };
 
-  const fillDefaultPersonalAccount = () => {
+  const fillAdhithianCredentials = () => {
     setIsRegister(false);
-    setEmail('student@careerforge.ai');
-    setPassword('CareerForge2027!');
+    setEmail('adhithian260506@gmail.com');
+    setPassword('Adhi@2656');
+    setErrorMessage(null);
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem',
-      background: 'radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 60%), #090d16'
-    }}>
-      <div className="glass-card" style={{ width: '100%', maxWidth: '520px', padding: '2.5rem', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
-        {/* Brand Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            width: '52px',
-            height: '52px',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--gradient-brand)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            margin: '0 auto 1rem',
-            boxShadow: '0 6px 20px var(--indigo-glow)'
-          }}>
-            <Sparkles size={28} />
-          </div>
-          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            CareerForge AI
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '0.25rem' }}>
-            Autonomous Career Intelligence & SDE Preparation Engine
-          </p>
-        </div>
+    <div className="login-page-wrapper">
+      <div className="login-container">
+        {/* Decorative Top Accent Glow */}
+        <div className="login-accent-glow" />
 
-        {errorMessage && (
-          <div style={{
-            padding: '0.85rem 1rem',
-            background: 'rgba(244, 63, 94, 0.12)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
-            borderRadius: 'var(--radius-sm)',
-            color: '#fca5a5',
-            fontSize: '0.85rem',
-            marginBottom: '1.25rem'
-          }}>
-            {errorMessage}
+        <div className="glass-card login-card">
+          {/* Header & Logo */}
+          <div className="login-header">
+            <div className="login-brand-icon">
+              <Sparkles size={28} />
+            </div>
+            <div className="login-status-tag">
+              <span className="login-status-dot" />
+              <span>SDE Preparation Engine • Class of 2027</span>
+            </div>
+            <h1 className="login-title">CareerForge AI</h1>
+            <p className="login-subtitle">
+              Autonomous Career Intelligence, Adaptive 4-Hour Daily Curriculum & SDE Mastery
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {isRegister && (
-            <div>
-              <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-                Full Name
-              </label>
-              <input
-                type="text"
-                className="form-input"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-              />
+          {/* Mode Switcher Tabs */}
+          <div className="login-tabs">
+            <button
+              type="button"
+              className={`login-tab ${!isRegister ? 'active' : ''}`}
+              onClick={() => {
+                setIsRegister(false);
+                setErrorMessage(null);
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              className={`login-tab ${isRegister ? 'active' : ''}`}
+              onClick={() => {
+                setIsRegister(true);
+                setErrorMessage(null);
+              }}
+            >
+              Student Onboarding
+            </button>
+          </div>
+
+          {/* Error Banner */}
+          {errorMessage && (
+            <div className="login-error-banner" role="alert">
+              <div className="login-error-text">{errorMessage}</div>
             </div>
           )}
 
-          <div>
-            <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-              Email Address
-            </label>
-            <input
-              type="email"
-              className="form-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-              Password
-            </label>
-            <input
-              type="password"
-              className="form-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          {isRegister && (
-            <>
-              <div>
-                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-                  Degree & Specialization
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="login-form">
+            {isRegister && (
+              <div className="form-group">
+                <label className="form-label">
+                  <User size={14} />
+                  <span>Full Name</span>
                 </label>
+                <div className="input-with-icon">
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Adhithian S"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label className="form-label">
+                <Mail size={14} />
+                <span>Email Address</span>
+              </label>
+              <div className="input-with-icon">
                 <input
-                  type="text"
+                  type="email"
                   className="form-input"
-                  value={degree}
-                  onChange={(e) => setDegree(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="adhithian260506@gmail.com"
                   required
                 />
               </div>
+            </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-                    Graduation Year
-                  </label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={graduationYear}
-                    onChange={(e) => setGraduationYear(parseInt(e.target.value) || 2027)}
-                    required
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-                    Daily Study Hours
-                  </label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    min={1}
-                    max={10}
-                    value={studyHours}
-                    onChange={(e) => setStudyHours(parseInt(e.target.value) || 4)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-                  Target Companies
+            <div className="form-group">
+              <div className="label-row">
+                <label className="form-label">
+                  <Lock size={14} />
+                  <span>Password</span>
                 </label>
+              </div>
+              <div className="input-with-icon password-input-wrap">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="form-input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {isRegister && (
+              <>
+                <div className="form-group">
+                  <label className="form-label">
+                    <GraduationCap size={14} />
+                    <span>Degree & Department</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={degree}
+                    onChange={(e) => setDegree(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-row-2">
+                  <div className="form-group">
+                    <label className="form-label">
+                      <span>Graduation Year</span>
+                    </label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={graduationYear}
+                      onChange={(e) => setGraduationYear(parseInt(e.target.value) || 2027)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Clock size={14} />
+                      <span>Study Hours/Day</span>
+                    </label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      min={1}
+                      max={12}
+                      value={studyHours}
+                      onChange={(e) => setStudyHours(parseInt(e.target.value) || 4)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    <Briefcase size={14} />
+                    <span>Target Companies</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={targetCompanies}
+                    onChange={(e) => setTargetCompanies(e.target.value)}
+                    placeholder="Zoho, TCS, Amazon, Google, PayPal"
+                  />
+                </div>
+              </>
+            )}
+
+            <button
+              type="submit"
+              className="btn btn-primary login-submit-btn"
+              disabled={loading}
+            >
+              {loading ? (
+                <span>Authenticating with Engine...</span>
+              ) : isRegister ? (
+                <>
+                  <span>Create Account & Start Curriculum</span>
+                  <ArrowRight size={18} />
+                </>
+              ) : (
+                <>
+                  <span>Sign In to CareerForge</span>
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Quick Credential Card */}
+          <div className="login-quick-card">
+            <div className="quick-card-header">
+              <span className="quick-badge">Verified Credentials</span>
+              <button
+                type="button"
+                onClick={fillAdhithianCredentials}
+                className="quick-fill-btn"
+              >
+                <Zap size={14} />
+                <span>Auto-Fill Credentials</span>
+              </button>
+            </div>
+            <div className="quick-info-row">
+              <span className="quick-label">Email:</span>
+              <span className="quick-value">adhithian260506@gmail.com</span>
+            </div>
+            <div className="quick-info-row">
+              <span className="quick-label">Password:</span>
+              <span className="quick-value">Adhi@2656</span>
+            </div>
+          </div>
+
+          {/* Server Config Accordion */}
+          <div className="server-config-section">
+            <button
+              type="button"
+              className="server-config-toggle"
+              onClick={() => setShowServerConfig(!showServerConfig)}
+            >
+              <Server size={14} />
+              <span>{showServerConfig ? 'Hide Backend Endpoint' : 'Backend Server Settings'}</span>
+            </button>
+
+            {showServerConfig && (
+              <div className="server-config-box">
+                <label className="form-label">Active API Base URL:</label>
                 <input
                   type="text"
                   className="form-input"
-                  value={targetCompanies}
-                  onChange={(e) => setTargetCompanies(e.target.value)}
+                  value={serverUrl}
+                  onChange={(e) => setServerUrl(e.target.value)}
+                  placeholder="http://localhost:8000/api/v1"
                 />
+                <div className="server-status-row">
+                  <button
+                    type="button"
+                    onClick={testServerConnection}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    Test & Save URL
+                  </button>
+                  {serverStatus && (
+                    <span className="server-status-text">
+                      {serverStatus}
+                    </span>
+                  )}
+                </div>
               </div>
-            </>
-          )}
-
-          <button type="submit" className="btn btn-primary" style={{ marginTop: '0.75rem', width: '100%', padding: '0.8rem' }} disabled={loading}>
-            {loading ? 'Authenticating...' : isRegister ? 'Complete Onboarding & Enter' : 'Sign In to CareerForge'}
-          </button>
-        </form>
-
-        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          <button
-            onClick={() => setIsRegister(!isRegister)}
-            style={{ background: 'none', border: 'none', color: 'var(--indigo-500)', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600 }}
-          >
-            {isRegister ? 'Already have a profile? Sign In' : 'Need a new student profile? Register here'}
-          </button>
-        </div>
-
-        {/* Quick Personal Access Button */}
-        <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-          <button
-            onClick={fillDefaultPersonalAccount}
-            className="btn btn-secondary btn-sm"
-            style={{ width: '100%', fontSize: '0.78rem' }}
-          >
-            Use Default Profile: student@careerforge.ai
-          </button>
-        </div>
-
-        {/* Server Endpoint Configurator */}
-        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-          <button
-            type="button"
-            onClick={() => setShowServerConfig(!showServerConfig)}
-            style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '0.74rem', cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            {showServerConfig ? 'Hide API Server Settings' : 'Configure Backend API Endpoint'}
-          </button>
-
-          {showServerConfig && (
-            <div style={{ marginTop: '0.75rem', padding: '0.85rem', background: 'rgba(0,0,0,0.35)', borderRadius: 'var(--radius-sm)', textAlign: 'left', border: '1px solid var(--border-subtle)' }}>
-              <label style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
-                Backend API URL:
-              </label>
-              <input
-                type="text"
-                className="form-input"
-                style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem', width: '100%' }}
-                value={serverUrl}
-                onChange={(e) => setServerUrl(e.target.value)}
-                placeholder="https://your-backend.onrender.com/api/v1"
-              />
-              <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={testServerConnection}
-                  className="btn btn-secondary btn-sm"
-                  style={{ fontSize: '0.72rem', padding: '0.3rem 0.6rem' }}
-                >
-                  Test & Save
-                </button>
-                {serverStatus && (
-                  <span style={{ fontSize: '0.72rem', color: serverStatus.startsWith('✅') ? '#86efac' : '#fca5a5' }}>
-                    {serverStatus}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

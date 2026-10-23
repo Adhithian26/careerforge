@@ -10,26 +10,26 @@ def test_health_check(client: TestClient):
 def test_login_and_token(client: TestClient):
     # Default seeded personal user
     res = client.post("/api/v1/auth/login", json={
-        "email": "student@careerforge.ai",
-        "password": "CareerForge2027!"
+        "email": "adhithian260506@gmail.com",
+        "password": "Adhi@2656"
     })
     assert res.status_code == 200
     data = res.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
-    assert data["email"] == "student@careerforge.ai"
+    assert data["email"] == "adhithian260506@gmail.com"
 
 def test_invalid_login(client: TestClient):
     res = client.post("/api/v1/auth/login", json={
-        "email": "student@careerforge.ai",
+        "email": "adhithian260506@gmail.com",
         "password": "WrongPassword123"
     })
     assert res.status_code == 401
 
 def test_get_current_user_profile(client: TestClient):
     login_res = client.post("/api/v1/auth/login", json={
-        "email": "student@careerforge.ai",
-        "password": "CareerForge2027!"
+        "email": "adhithian260506@gmail.com",
+        "password": "Adhi@2656"
     })
     token = login_res.json()["access_token"]
     

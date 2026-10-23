@@ -36,28 +36,28 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="top-header">
       <div className="header-left">
-        <button className="mobile-menu-btn" onClick={onToggleSidebar} aria-label="Toggle Navigation">
-          <Menu size={20} />
+        <button className="mobile-menu-btn" onClick={onToggleSidebar} aria-label="Toggle Navigation" title="Open Menu">
+          <Menu size={22} />
         </button>
-        <div>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div className="header-title-wrap">
+          <h2 className="header-title">
             {info.title}
           </h2>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+          <p className="header-subtitle">
             {info.subtitle}
           </p>
         </div>
       </div>
 
       <div className="header-right">
-        <div className="header-metric-pill" title="Daily study time budget">
+        <div className="header-metric-pill header-metric-pill-hours" title="Daily study time budget">
           <Clock size={15} style={{ color: 'var(--indigo-500)' }} />
-          <span>4h Daily Allocation</span>
+          <span className="pill-text">4h Daily Allocation</span>
         </div>
 
-        <div className="header-metric-pill" title="Verified Target Graduation">
+        <div className="header-metric-pill header-metric-pill-track" title="Verified Target Graduation">
           <CheckCircle size={15} style={{ color: 'var(--emerald-500)' }} />
-          <span>2027 SDE Track</span>
+          <span className="pill-text">2027 SDE Track</span>
         </div>
 
         <button

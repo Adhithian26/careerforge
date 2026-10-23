@@ -107,8 +107,8 @@ npm run dev
 *Frontend application will be accessible at:* `http://localhost:5173`
 
 **Default Credentials for Instant Access:**
-- Email: `student@careerforge.ai`
-- Password: `CareerForge2027!`
+- Email: `adhithian260506@gmail.com`
+- Password: `Adhi@2656`
 
 ---
 
