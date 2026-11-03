@@ -24,10 +24,10 @@ interface LoginOnboardingProps {
 
 export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) => {
   const [isRegister, setIsRegister] = useState(false);
-  const [email, setEmail] = useState('adhithian260506@gmail.com');
-  const [password, setPassword] = useState('Adhi@2656');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [fullName, setFullName] = useState('Adhithian S');
+  const [fullName, setFullName] = useState('');
   const [degree, setDegree] = useState('B.Tech Artificial Intelligence and Data Science');
   const [graduationYear, setGraduationYear] = useState(2027);
   const [studyHours, setStudyHours] = useState(4);
@@ -85,13 +85,6 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
     }
   };
 
-  const fillAdhithianCredentials = () => {
-    setIsRegister(false);
-    setEmail('adhithian260506@gmail.com');
-    setPassword('Adhi@2656');
-    setErrorMessage(null);
-  };
-
   return (
     <div className="login-page-wrapper">
       <div className="login-container">
@@ -134,7 +127,7 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
                 setErrorMessage(null);
               }}
             >
-              Student Onboarding
+              Create Account
             </button>
           </div>
 
@@ -159,7 +152,7 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
                     className="form-input"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Adhithian S"
+                    placeholder="e.g. Alex Morgan"
                     required
                   />
                 </div>
@@ -177,7 +170,7 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
                   className="form-input"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="adhithian260506@gmail.com"
+                  placeholder="student@university.edu"
                   required
                 />
               </div>
@@ -294,27 +287,28 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
             </button>
           </form>
 
-          {/* Quick Credential Card */}
+          {/* Mode Switch Helper Card */}
           <div className="login-quick-card">
             <div className="quick-card-header">
-              <span className="quick-badge">Verified Credentials</span>
-              <button
-                type="button"
-                onClick={fillAdhithianCredentials}
-                className="quick-fill-btn"
-              >
-                <Zap size={14} />
-                <span>Auto-Fill Credentials</span>
-              </button>
+              <span className="quick-badge">{isRegister ? 'New Student Registration' : 'Autonomous SDE Preparation'}</span>
             </div>
-            <div className="quick-info-row">
-              <span className="quick-label">Email:</span>
-              <span className="quick-value">adhithian260506@gmail.com</span>
-            </div>
-            <div className="quick-info-row">
-              <span className="quick-label">Password:</span>
-              <span className="quick-value">Adhi@2656</span>
-            </div>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.5rem 0 0.85rem 0', lineHeight: 1.5 }}>
+              {isRegister
+                ? 'Creating an account customizes your 4-hour daily curriculum, topic benchmarks (Python, SQL, DSA), mock interview simulator, and verified job tracker.'
+                : 'Sign in with your registered email to continue your daily preparation sprint and track your SDE readiness.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setErrorMessage(null);
+              }}
+              className="quick-fill-btn"
+              style={{ width: '100%', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <Zap size={14} />
+              <span>{isRegister ? 'Already registered? Switch to Sign In' : 'New student? Create a New Account'}</span>
+            </button>
           </div>
 
           {/* Server Config Accordion */}

@@ -106,9 +106,9 @@ npm run dev
 ```
 *Frontend application will be accessible at:* `http://localhost:5173`
 
-**Default Credentials for Instant Access:**
-- Email: `adhithian260506@gmail.com`
-- Password: `Adhi@2656`
+**Getting Started:**
+- Click **Create Account** on the login page to register your student profile and automatically generate your 4-hour adaptive daily curriculum, baseline skill matrix, and job pipeline.
+- Or use the test account: `teststudent@careerforge.ai` / `TestStudent@123`.
 
 ---
 

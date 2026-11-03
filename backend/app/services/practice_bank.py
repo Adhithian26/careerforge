@@ -80,6 +80,46 @@ CODING_PROBLEMS_CATALOG: List[Dict[str, Any]] = [
             {"input": [[1, 2, 1]], "expected": 2, "is_sample": False}
         ],
         "solution_approach": "Two pointers `l = 0, r = len(height) - 1`. While `l < r`: `area = min(height[l], height[r]) * (r - l)`. Move the pointer corresponding to the shorter height inward. O(N) time, O(1) space."
+    },
+    {
+        "slug": "binary-search",
+        "title": "Binary Search",
+        "difficulty": "Easy",
+        "category": "Searching",
+        "description": "Given an array of integers `nums` which is sorted in ascending order, and an integer `target`, write a function to search `target` in `nums`. If `target` exists, then return its index. Otherwise, return -1.\n\nYou must write an algorithm with `O(log n)` runtime complexity.",
+        "starter_code": "def search(nums, target):\n    # Write your solution here\n    pass\n",
+        "function_name": "search",
+        "hints": [
+            "Use two pointers `left` and `right` representing the search boundary.",
+            "Compare the middle element with `target` and shrink the range by half."
+        ],
+        "test_cases": [
+            {"input": [[-1, 0, 3, 5, 9, 12], 9], "expected": 4, "is_sample": True},
+            {"input": [[-1, 0, 3, 5, 9, 12], 2], "expected": -1, "is_sample": True},
+            {"input": [[5], 5], "expected": 0, "is_sample": False},
+            {"input": [[1, 3, 5, 7, 9, 11], 11], "expected": 5, "is_sample": False}
+        ],
+        "solution_approach": "Binary search maintains `left = 0, right = len(nums) - 1`. While `left <= right`: `mid = (left + right) // 2`. If `nums[mid] == target`, return `mid`. Adjust boundaries depending on `nums[mid] < target`. Runs in O(log N) time and O(1) space."
+    },
+    {
+        "slug": "maximum-subarray",
+        "title": "Maximum Subarray (Kadane's Algorithm)",
+        "difficulty": "Medium",
+        "category": "Dynamic Programming",
+        "description": "Given an integer array `nums`, find the subarray with the largest sum, and return its sum.",
+        "starter_code": "def max_sub_array(nums):\n    # Write your solution here\n    pass\n",
+        "function_name": "max_sub_array",
+        "hints": [
+            "At each element, decide whether to add it to the current subarray sum or start fresh from the current element.",
+            "Track the overall maximum sum observed across the array."
+        ],
+        "test_cases": [
+            {"input": [[-2, 1, -3, 4, -1, 2, 1, -5, 4]], "expected": 6, "is_sample": True},
+            {"input": [[1]], "expected": 1, "is_sample": True},
+            {"input": [[5, 4, -1, 7, 8]], "expected": 23, "is_sample": False},
+            {"input": [[-1, -2, -3]], "expected": -1, "is_sample": False}
+        ],
+        "solution_approach": "Kadane's Algorithm: `current_sum = max_sum = nums[0]`. For each num in `nums[1:]`: `current_sum = max(num, current_sum + num)` and `max_sum = max(max_sum, current_sum)`. O(N) time, O(1) space."
     }
 ]
 
@@ -139,6 +179,20 @@ SQL_PROBLEMS_CATALOG: List[Dict[str, Any]] = [
             "Use `COUNT(*)` and `SUM(total_amount)`."
         ],
         "explanation": "Aggregation functions `COUNT` and `SUM` operate over the subset of rows matching the WHERE condition to compute overall volume and gross revenue."
+    },
+    {
+        "slug": "second-highest-salary",
+        "title": "Second Highest Salary",
+        "difficulty": "Medium",
+        "category": "Subqueries & Aggregations",
+        "prompt": "Write a SQL query to find the second highest distinct salary from the `employees` table as `second_highest_salary`.",
+        "schema_info": "Table available: `employees(emp_id, first_name, last_name, dept_id, salary, hire_date, role)`",
+        "expected_sql": "SELECT MAX(salary) AS second_highest_salary FROM employees WHERE salary < (SELECT MAX(salary) FROM employees);",
+        "hints": [
+            "Find the global maximum salary with a subquery.",
+            "Filter for the maximum salary that is strictly less than the global maximum."
+        ],
+        "explanation": "A correlated or nested subquery selects the overall maximum salary. Filtering out that top salary allows `MAX(salary)` to naturally yield the second highest distinct compensation."
     }
 ]
 

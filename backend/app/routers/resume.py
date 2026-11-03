@@ -25,4 +25,8 @@ def analyze_resume(payload: ResumeAnalyzeRequest):
 @router.post("/project-prep", response_model=ProjectInterviewPrepResponse)
 def prepare_project_questions(payload: ProjectInterviewPrepRequest):
     """Generates probing architecture and tradeoff questions for the student's actual projects."""
-    return get_project_interview_prep(payload.project_title)
+    return get_project_interview_prep(
+        project_title=payload.project_title,
+        project_description=payload.project_description,
+        tech_stack=payload.tech_stack
+    )

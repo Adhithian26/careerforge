@@ -1,5 +1,9 @@
+import json
 import re
-from typing import List, Dict, Any, Set
+from typing import List, Dict, Any, Set, Optional
+from backend.app.ai.gemini_provider import GeminiProvider
+
+_gemini_resume = GeminiProvider()
 
 COMMON_TECH_SKILLS = [
     "python", "sql", "dsa", "data structures", "algorithms", "fastapi", "react", "typescript",
@@ -112,9 +116,43 @@ def analyze_resume_alignment(
         "action_items": action_items
     }
 
-def get_project_interview_prep(project_title: str) -> Dict[str, Any]:
+def get_project_interview_prep(
+    project_title: str,
+    project_description: Optional[str] = None,
+    tech_stack: Optional[str] = None
+) -> Dict[str, Any]:
     """Generates rigorous technical interview questions tailored to the student's actual projects."""
     p_lower = project_title.lower()
+
+    # Attempt AI-powered tailored question generation via Gemini if configured
+    if _gemini_resume.is_configured():
+        try:
+            prompt = f"""Generate technical interview prep questions for an SDE candidate presenting this project:
+Project Title: {project_title}
+Project Description: {project_description or 'Software engineering project'}
+Tech Stack: {tech_stack or 'Python, REST APIs, Databases'}
+
+Respond with ONLY a valid JSON object matching this schema:
+{{
+  "architecture_questions": ["q1", "q2", "q3"],
+  "deep_dive_questions": ["q1", "q2"],
+  "tradeoff_challenges": ["q1"],
+  "recommended_talking_points": ["point 1", "point 2"]
+}}
+Do NOT output markdown code fences or other text."""
+            raw = _gemini_resume.generate_text(prompt=prompt, system_instruction="You are a senior technical interviewer at top tech firms.").strip()
+            if raw.startswith("```"):
+                raw = raw.split("```")[1]
+                if raw.startswith("json"):
+                    raw = raw[4:]
+                raw = raw.strip()
+            parsed = json.loads(raw)
+            if all(k in parsed for k in ["architecture_questions", "deep_dive_questions", "tradeoff_challenges", "recommended_talking_points"]):
+                return parsed
+        except Exception:
+            pass
+
+    # Deterministic catalog fallback
     if "rag" in p_lower or "chat" in p_lower or "retrieval" in p_lower:
         return PROJECT_QUESTIONS_CATALOG["rag"]
     elif "face" in p_lower or "attend" in p_lower or "vision" in p_lower:
@@ -123,8 +161,8 @@ def get_project_interview_prep(project_title: str) -> Dict[str, Any]:
         # Combined project question suite
         return {
             "architecture_questions": [
-                "What was the high-level system architecture of this project? Walk me through how data flows from input to persistent output.",
-                "How did you modularize the frontend, backend API, and database layers?"
+                f"What was the high-level system architecture of '{project_title}'? Walk me through how data flows from input to persistent output.",
+                f"How did you modularize the frontend, backend API, and database layers in {project_title}?"
             ],
             "deep_dive_questions": [
                 "What was the most challenging technical bug or bottleneck you encountered during implementation, and how did you isolate it?",

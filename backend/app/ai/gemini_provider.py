@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import List, Dict, Optional, Any
 from backend.app.ai.provider_base import ModelProvider
 from backend.app.config import settings
@@ -21,6 +22,8 @@ class GeminiProvider(ModelProvider):
                 self._client = None
 
     def is_configured(self) -> bool:
+        if os.environ.get("TESTING", "").lower() in ("1", "true") or "pytest" in sys.modules:
+            return False
         return bool(self.api_key and self._client)
 
     def generate_text(self, prompt: str, system_instruction: Optional[str] = None, **kwargs) -> str:

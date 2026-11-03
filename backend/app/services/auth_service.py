@@ -32,24 +32,13 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     if not token:
-        # Check if single personal user exists for seamless local first-run onboarding
-        first_user = db.query(User).first()
-        if first_user:
-            return first_user
         raise credentials_exception
 
     user_id = decode_access_token(token)
     if not user_id:
-        # Fallback to first user in local dev if token invalid but users exist
-        first_user = db.query(User).first()
-        if first_user:
-            return first_user
         raise credentials_exception
 
     user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
     if user is None:
-        first_user = db.query(User).first()
-        if first_user:
-            return first_user
         raise credentials_exception
     return user

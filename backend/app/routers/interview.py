@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -12,8 +13,11 @@ from backend.app.schemas.interview import (
     InterviewSessionDetailResponse
 )
 from backend.app.services.auth_service import get_current_user
+from backend.app.ai.gemini_provider import GeminiProvider
 
 router = APIRouter(prefix="/interview", tags=["Mock Interview"])
+
+gemini_evaluator = GeminiProvider()
 
 # Curated question sequences per interview mode
 INTERVIEW_QUESTION_POOLS = {
@@ -39,7 +43,51 @@ INTERVIEW_QUESTION_POOLS = {
 }
 
 def evaluate_answer_rubric(question: str, answer: str, mode: str) -> Dict[str, Any]:
-    """Transparent deterministic rubric evaluating answer length, key terms, clarity, and communication."""
+    """Evaluates candidate response using Gemini AI semantic rubric when available, with deterministic fallback."""
+    # Attempt AI evaluation via Gemini if configured
+    if gemini_evaluator.is_configured():
+        try:
+            eval_prompt = f"""You are an expert technical interviewer evaluating an SDE candidate's response.
+Question ({mode} Round):
+{question}
+
+Candidate Answer:
+{answer}
+
+Evaluate the candidate's answer thoroughly and return ONLY a valid JSON object with the following schema:
+{{
+  "clarity": float (1.0 - 10.0),
+  "correctness": float (1.0 - 10.0),
+  "communication": float (1.0 - 10.0),
+  "feedback": "Concise, constructive critique highlighting strengths and missing technical points",
+  "improvements": ["Actionable improvement 1", "Actionable improvement 2"]
+}}
+Do NOT output any markdown backticks or commentary outside the JSON."""
+            raw_text = gemini_evaluator.generate_text(
+                prompt=eval_prompt,
+                system_instruction="You are a strict, fair SDE hiring manager at top tech firms (Zoho, TCS, Amazon). Evaluate strictly and output valid JSON only."
+            ).strip()
+
+            # Clean JSON markdown if wrapped
+            if raw_text.startswith("```"):
+                raw_text = raw_text.split("```")[1]
+                if raw_text.startswith("json"):
+                    raw_text = raw_text[4:]
+                raw_text = raw_text.strip()
+
+            parsed = json.loads(raw_text)
+            if all(k in parsed for k in ["clarity", "correctness", "communication", "feedback", "improvements"]):
+                return {
+                    "clarity": float(parsed["clarity"]),
+                    "correctness": float(parsed["correctness"]),
+                    "communication": float(parsed["communication"]),
+                    "feedback": str(parsed["feedback"]),
+                    "improvements": list(parsed["improvements"])
+                }
+        except Exception:
+            pass  # Fall back seamlessly to deterministic evaluation
+
+    # Deterministic Rubric Fallback
     words = [w.strip() for w in answer.split() if w.strip()]
     word_count = len(words)
 

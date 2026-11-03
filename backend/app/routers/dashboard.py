@@ -104,12 +104,22 @@ def get_dashboard_summary(
         "total": len(apps)
     }
 
-    # 7. Weekly Progress (last 7 days completed study hours vs target)
-    all_recent_tasks = db.query(StudyTask).filter(
-        StudyTask.user_id == current_user.id,
-        StudyTask.scheduled_date >= (today - timedelta(days=6)),
-        StudyTask.scheduled_date <= today
-    ).all()
+    # 7. Weekly Progress (active plan tasks or last 7 days window)
+    active_plan = db.query(StudyPlan).filter(
+        StudyPlan.user_id == current_user.id,
+        StudyPlan.is_active == True
+    ).first()
+
+    if active_plan:
+        all_recent_tasks = db.query(StudyTask).filter(
+            StudyTask.plan_id == active_plan.id
+        ).all()
+    else:
+        all_recent_tasks = db.query(StudyTask).filter(
+            StudyTask.user_id == current_user.id,
+            StudyTask.scheduled_date >= (today - timedelta(days=6)),
+            StudyTask.scheduled_date <= today
+        ).all()
     
     total_planned_weekly = len(all_recent_tasks)
     total_completed_weekly = sum(1 for t in all_recent_tasks if t.status == "completed")
