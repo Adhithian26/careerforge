@@ -104,3 +104,16 @@ def submit_code(
         result["solution_approach"] = problem.solution_approach
 
     return result
+
+@router.post("/problems/{slug}/analyze")
+def analyze_solution_complexity(
+    slug: str,
+    payload: CodingRunRequest,
+    db: Session = Depends(get_db)
+):
+    """Evaluates Time and Space Complexity, bottlenecks, and SDE optimization tips using AI."""
+    problem = db.query(CodingProblem).filter(CodingProblem.slug == slug).first()
+    title = problem.title if problem else slug
+    from backend.app.ai.code_analyzer import analyze_code_complexity
+    analysis = analyze_code_complexity(problem_title=title, code=payload.code)
+    return analysis

@@ -144,6 +144,77 @@ def get_dashboard_summary(
         target_comps = profile.preferred_companies if profile and profile.preferred_companies else "Zoho, TCS, Amazon"
         recommended_steps.append(f"Log your target companies ({target_comps}) in the Job Tracker.")
 
+    # 9. Preparation Streak & Activity Heatmap (Past 84 days / 12 weeks)
+    past_84_days = today - timedelta(days=84)
+    completed_tasks_history = db.query(StudyTask).filter(
+        StudyTask.user_id == current_user.id,
+        StudyTask.status == "completed",
+        StudyTask.scheduled_date >= past_84_days
+    ).all()
+
+    activity_counts: Dict[str, int] = {}
+    for ct in completed_tasks_history:
+        d_str = ct.scheduled_date.isoformat()
+        activity_counts[d_str] = activity_counts.get(d_str, 0) + 1
+
+    # Also record today if tasks are completed today
+    today_completed_count = sum(1 for t in today_tasks_data if t["status"] == "completed")
+    if today_completed_count > 0:
+        activity_counts[today.isoformat()] = max(activity_counts.get(today.isoformat(), 0), today_completed_count)
+
+    # Compute current active streak
+    streak_days = 0
+    if activity_counts.get(today.isoformat(), 0) > 0:
+        streak_days = 1
+        check_date = today - timedelta(days=1)
+    else:
+        check_date = today - timedelta(days=1)
+
+    while True:
+        if activity_counts.get(check_date.isoformat(), 0) > 0:
+            streak_days += 1
+            check_date -= timedelta(days=1)
+        else:
+            break
+
+    # If user is new and has no history yet, give a baseline starting streak of 1 if they completed any task or 0
+    if streak_days == 0 and today_completed_count > 0:
+        streak_days = 1
+
+    # 10. Company-Specific SDE Readiness Benchmarks
+    company_readiness = []
+    companies_list = [c.strip() for c in (profile.preferred_companies or "Zoho, TCS, Amazon").split(",") if c.strip()][:4]
+    if not companies_list:
+        companies_list = ["Zoho", "TCS", "Amazon"]
+
+    topic_scores = {sm.topic.lower(): sm.measured_proficiency for sm in skill_metrics}
+    dsa_score = topic_scores.get("dsa", 45.0)
+    py_score = topic_scores.get("python", 65.0)
+    sql_score = topic_scores.get("sql", 60.0)
+    apt_score = topic_scores.get("aptitude", 65.0)
+    cs_score = (topic_scores.get("oop", 70.0) + topic_scores.get("dbms", 65.0) + topic_scores.get("operating systems", 55.0)) / 3.0
+
+    for comp in companies_list:
+        comp_lower = comp.lower()
+        if "zoho" in comp_lower:
+            score = round(dsa_score * 0.35 + py_score * 0.30 + sql_score * 0.25 + apt_score * 0.10, 1)
+            focus = "Fast/Slow Pointers, Recursion & Complex SQL Queries"
+        elif "amazon" in comp_lower or "google" in comp_lower or "paypal" in comp_lower:
+            score = round(dsa_score * 0.45 + cs_score * 0.25 + py_score * 0.20 + apt_score * 0.10, 1)
+            focus = "Trees, Dynamic Programming & Scalable System Architecture"
+        elif "tcs" in comp_lower or "tech mahindra" in comp_lower:
+            score = round(apt_score * 0.40 + cs_score * 0.30 + py_score * 0.30, 1)
+            focus = "Numerical Aptitude, OOP Principles & Data Structures"
+        else:
+            score = round((dsa_score + py_score + sql_score + cs_score) / 4.0, 1)
+            focus = "Core DSA Algorithms & Relational Database Design"
+
+        company_readiness.append({
+            "company": comp,
+            "readiness_percentage": min(98.0, max(20.0, score)),
+            "focus_area": focus
+        })
+
     return {
         "user": {
             "name": current_user.full_name,
@@ -179,5 +250,8 @@ def get_dashboard_summary(
         "interview_prep": {
             "mock_interviews_completed": interview_count
         },
+        "streak_days": streak_days,
+        "activity_counts": activity_counts,
+        "company_readiness": company_readiness,
         "recommended_next_steps": recommended_steps
     }

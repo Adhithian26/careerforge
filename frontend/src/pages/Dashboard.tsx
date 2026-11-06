@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { api } from '../api/client';
 import { PersonalizeMetricsModal } from '../components/PersonalizeMetricsModal';
+import { ActivityHeatmap } from '../components/ActivityHeatmap';
+import { CompanyReadinessCard } from '../components/CompanyReadinessCard';
 
 interface DashboardProps {
   onNavigate: (tab: string) => void;
@@ -182,6 +184,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </div>
 
+      {/* Target Company SDE Readiness Index */}
+      <CompanyReadinessCard readiness={data.company_readiness || []} onNavigate={onNavigate} />
+
       {/* Main 2-Column Section: Today's Plan & Skill Proficiency */}
       <div className="grid-2">
         {/* Left Column: Today's 4-Hour Study Plan */}
@@ -343,6 +348,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+
+      {/* 12-Week Preparation Discipline & Activity Heatmap */}
+      <ActivityHeatmap
+        activityCounts={data.activity_counts || {}}
+        streakDays={data.streak_days || 0}
+      />
 
       {/* Missed Tasks & Recommended Next Steps */}
       <div className="grid-2">

@@ -157,6 +157,8 @@ export const api = {
     request<CodingExecutionResponse>(`/coding/problems/${slug}/run`, { method: 'POST', body: JSON.stringify({ code }) }),
   submitCoding: (slug: string, code: string) =>
     request<CodingExecutionResponse>(`/coding/problems/${slug}/submit`, { method: 'POST', body: JSON.stringify({ code }) }),
+  analyzeCodingComplexity: (slug: string, code: string) =>
+    request<any>(`/coding/problems/${slug}/analyze`, { method: 'POST', body: JSON.stringify({ code }) }),
 
   // SQL Practice
   getSqlProblems: () => request<Array<{ id: string; slug: string; title: string; difficulty: string; category: string }>>('/sql/problems'),
@@ -215,6 +217,24 @@ export const api = {
     request<any[]>(`/jobs/approved-sources${query ? `?query=${query}` : ''}`),
 
   // Resume & Project Assistant
+  uploadResumePdf: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const base = getApiBase();
+    const token = authStorage.getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${base}/resume/upload-pdf`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to upload and parse resume file.');
+    }
+    return response.json();
+  },
   analyzeResume: (resume_text: string, job_description: string, target_role?: string) =>
     request<any>('/resume/analyze', {
       method: 'POST',

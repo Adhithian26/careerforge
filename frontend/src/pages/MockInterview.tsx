@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Mic, CheckCircle2, Award, Clock, ArrowRight, RefreshCw, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Mic, MicOff, Volume2, VolumeX, CheckCircle2, Award, Clock, ArrowRight, RefreshCw, MessageSquare, Sparkles } from 'lucide-react';
 import { api } from '../api/client';
 import { InterviewSession, User } from '../types';
 
@@ -24,6 +24,91 @@ export const MockInterview: React.FC<MockInterviewProps> = ({ currentUser }) => 
   const [roleTitle, setRoleTitle] = useState(defaultRole);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Voice Mode States
+  const [isRecording, setIsRecording] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setSpeechSupported(false);
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event: any) => {
+      let finalTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript + ' ';
+        }
+      }
+      if (finalTranscript) {
+        setUserAnswer(prev => prev ? `${prev.trim()} ${finalTranscript.trim()}` : finalTranscript.trim());
+      }
+    };
+
+    recognition.onerror = (e: any) => {
+      console.warn('Speech recognition error:', e);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+    };
+  }, []);
+
+  const toggleRecording = () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+    if (isRecording) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+      setIsRecording(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (e) {
+        console.warn('Failed to start recognition:', e);
+      }
+    }
+  };
+
+  const handleSpeakQuestion = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  };
 
   const loadPastSessions = async () => {
     try {
@@ -138,9 +223,21 @@ export const MockInterview: React.FC<MockInterviewProps> = ({ currentUser }) => 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {activeSession.exchanges.map((ex) => (
             <div key={ex.id} className="glass-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.65rem' }}>
-                <span className="badge badge-medium">Round {ex.round_number}</span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Interviewer Question</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className="badge badge-medium">Round {ex.round_number}</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Interviewer Question</span>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => handleSpeakQuestion(ex.question)}
+                  style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  title="Listen to interviewer speak this question aloud"
+                >
+                  {isSpeaking ? <VolumeX size={13} style={{ color: 'var(--rose-500)' }} /> : <Volume2 size={13} style={{ color: 'var(--indigo-500)' }} />}
+                  <span>{isSpeaking ? 'Stop Voice' : 'Listen Question'}</span>
+                </button>
               </div>
               <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>
                 {ex.question}
@@ -174,20 +271,67 @@ export const MockInterview: React.FC<MockInterviewProps> = ({ currentUser }) => 
         {/* Pending Question Answer Box */}
         {!isCompleted && pendingExchange && (
           <div className="glass-card">
-            <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Your Response (Round {pendingExchange.round_number}):
-            </h4>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-              Structure your answer with technical mechanics, trade-offs, and concrete examples (e.g. STAR method).
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+                  Your Response (Round {pendingExchange.round_number}):
+                </h4>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px', margin: 0 }}>
+                  Structure your answer with technical mechanics, trade-offs, and concrete examples (STAR method).
+                </p>
+              </div>
+
+              {/* Voice Mode Toggle Button */}
+              <button
+                type="button"
+                onClick={toggleRecording}
+                className={`btn btn-sm ${isRecording ? 'btn-urgent' : 'btn-secondary'}`}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem' }}
+                title={speechSupported ? 'Speak with microphone' : 'Microphone speech recognition requires Chrome, Edge or Safari'}
+              >
+                {isRecording ? (
+                  <>
+                    <MicOff size={14} className="animate-pulse" /> Stop Voice Recording
+                  </>
+                ) : (
+                  <>
+                    <Mic size={14} style={{ color: 'var(--rose-500)' }} /> Speak Answer with Mic
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Live Recording Indicator Bar */}
+            {isRecording && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                padding: '0.6rem 0.85rem',
+                borderRadius: 'var(--radius-sm)',
+                background: 'rgba(244, 63, 94, 0.1)',
+                border: '1px solid rgba(244, 63, 94, 0.35)',
+                color: 'var(--rose-500)',
+                fontSize: '0.8rem',
+                marginBottom: '0.75rem',
+                fontWeight: 600
+              }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--rose-500)', display: 'inline-block' }} />
+                <span>🔴 Listening to your voice... Speak clearly into your microphone (transcribing live)</span>
+              </div>
+            )}
+
             <textarea
               className="form-textarea"
               rows={6}
-              placeholder="Type your response here as if in a live technical or HR round..."
+              placeholder="Speak using the mic or type your response here as if in a live technical or HR round..."
               value={userAnswer}
               onChange={(e) => setUserAnswer(e.target.value)}
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                {userAnswer.trim().split(/\s+/).filter(Boolean).length} words recorded
+              </span>
               <button
                 className="btn btn-emerald"
                 onClick={handleAnswerQuestion}

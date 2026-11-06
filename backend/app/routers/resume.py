@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from backend.app.schemas.ai import (
     ResumeAnalyzeRequest,
     ResumeAnalyzeResponse,
@@ -12,6 +12,28 @@ from backend.app.services.resume_assistant import (
 from backend.app.services.auth_service import get_current_user
 
 router = APIRouter(prefix="/resume", tags=["Resume & Project Assistant"])
+
+@router.post("/upload-pdf")
+async def upload_resume_pdf(file: UploadFile = File(...)):
+    """Extracts text content from an uploaded PDF, TXT, or Markdown resume document."""
+    if not file:
+        raise HTTPException(status_code=400, detail="No file uploaded.")
+    contents = await file.read()
+    filename = file.filename or "resume.pdf"
+
+    if filename.lower().endswith((".txt", ".md")):
+        extracted = contents.decode("utf-8", errors="ignore")
+    else:
+        from backend.app.services.pdf_extractor import extract_text_from_pdf_bytes
+        extracted = extract_text_from_pdf_bytes(contents)
+
+    words = extracted.split()
+    return {
+        "filename": filename,
+        "extracted_text": extracted,
+        "word_count": len(words),
+        "message": f"Successfully extracted {len(words)} words from {filename}"
+    }
 
 @router.post("/analyze", response_model=ResumeAnalyzeResponse)
 def analyze_resume(payload: ResumeAnalyzeRequest):

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle, Plus } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { FileText, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle, Plus, UploadCloud, Loader2 } from 'lucide-react';
 import { api } from '../api/client';
 import { User } from '../types';
 
@@ -38,6 +38,41 @@ Requirements:
 
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [analyzing, setAnalyzing] = useState(false);
+
+  // Resume Upload State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+    setUploadError(null);
+    setUploadSuccess(null);
+    setUploadingFile(true);
+    try {
+      const res = await api.uploadResumePdf(file);
+      if (res.extracted_text) {
+        setResumeText(res.extracted_text);
+        setUploadSuccess(res.message || `Successfully extracted ${res.word_count || ''} words from ${file.name}`);
+      } else {
+        setUploadError('Could not extract text from this document. Please ensure it is not scanned/empty.');
+      }
+    } catch (err: any) {
+      setUploadError(err.message || 'Failed to process document');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
 
   // Project Interview Questions State
   const [selectedProject, setSelectedProject] = useState(parsedProjects[0] || 'Technical Project');
@@ -100,12 +135,100 @@ Requirements:
 
       {activeTab === 'resume_match' && (
         <div className="grid-2">
-          {/* Input Textareas */}
+          {/* Input Textareas & File Upload */}
           <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* File Dropzone */}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+              onDrop={handleFileDrop}
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                border: isDragging ? '2px dashed var(--indigo-500)' : '2px dashed var(--border-subtle)',
+                backgroundColor: isDragging ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                borderRadius: 'var(--radius-md)',
+                padding: '1.25rem 1rem',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".pdf,.txt,.md"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleFileUpload(e.target.files[0]);
+                  }
+                }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                {uploadingFile ? (
+                  <>
+                    <Loader2 size={24} className="spin" style={{ color: 'var(--indigo-400)' }} />
+                    <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>Extracting resume text...</span>
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud size={28} style={{ color: 'var(--indigo-400)' }} />
+                    <div>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        Drag & drop your Resume PDF, TXT, or MD
+                      </span>
+                      <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        Click to browse file from your device (Pure Client/Backend Parsing)
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Upload Feedback */}
+            {uploadSuccess && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '0.55rem 0.85rem',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.82rem',
+                color: 'var(--emerald-400)',
+              }}>
+                <CheckCircle2 size={16} />
+                <span>{uploadSuccess}</span>
+              </div>
+            )}
+            {uploadError && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '0.55rem 0.85rem',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.82rem',
+                color: 'var(--rose-400)',
+              }}>
+                <AlertTriangle size={16} />
+                <span>{uploadError}</span>
+              </div>
+            )}
+
             <div>
-              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                Your Resume Plaintext:
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                  Your Resume Plaintext:
+                </label>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {resumeText.split(/\s+/).filter(Boolean).length} words
+                </span>
+              </div>
               <textarea
                 className="form-textarea"
                 rows={9}
