@@ -35,3 +35,21 @@ class ProjectInterviewPrepResponse(BaseModel):
     deep_dive_questions: List[str]
     tradeoff_challenges: List[str]
     recommended_talking_points: List[str]
+
+class BulletEnhanceVariant(BaseModel):
+    label: str
+    bullet: str
+    impact_focus: str
+    action_verb: str
+
+class BulletEnhanceRequest(BaseModel):
+    raw_bullet: str
+    project_context: Optional[str] = None
+    target_role: Optional[str] = "Software Development Engineer"
+
+class BulletEnhanceResponse(BaseModel):
+    original: str
+    variants: List[BulletEnhanceVariant]
+    critique: str
+    power_verbs: List[str]
+    tips: List[str]

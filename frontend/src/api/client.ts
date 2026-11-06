@@ -245,6 +245,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ project_title, project_description, tech_stack }),
     }),
+  enhanceResumeBullet: (raw_bullet: string, project_context?: string, target_role?: string) =>
+    request<any>('/resume/enhance-bullet', {
+      method: 'POST',
+      body: JSON.stringify({ raw_bullet, project_context, target_role }),
+    }),
 
   // Weekly Review
   getLatestWeeklyReport: () => request<WeeklyReport>('/weekly/latest'),

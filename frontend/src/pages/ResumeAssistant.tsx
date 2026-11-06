@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle, Plus, UploadCloud, Loader2 } from 'lucide-react';
+import { FileText, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle, Plus, UploadCloud, Loader2, Copy, Check, Zap } from 'lucide-react';
 import { api } from '../api/client';
 import { User } from '../types';
 
@@ -8,7 +8,7 @@ interface ResumeAssistantProps {
 }
 
 export const ResumeAssistant: React.FC<ResumeAssistantProps> = ({ currentUser }) => {
-  const [activeTab, setActiveTab] = useState<'resume_match' | 'project_prep'>('resume_match');
+  const [activeTab, setActiveTab] = useState<'resume_match' | 'project_prep' | 'bullet_enhancer'>('resume_match');
 
   const studentName = currentUser?.full_name || 'Student Candidate';
   const studentDegree = currentUser?.profile?.degree || 'B.Tech AI & Data Science';
@@ -80,6 +80,37 @@ Requirements:
   const [projectQuestions, setProjectQuestions] = useState<any>(null);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
+  // Bullet Enhancer State
+  const [rawBulletInput, setRawBulletInput] = useState('Built a facial recognition attendance tracking system using OpenCV and Python');
+  const [bulletContextInput, setBulletContextInput] = useState('Computer Vision / Academic Project');
+  const [enhancingBullet, setEnhancingBullet] = useState(false);
+  const [enhancedBulletResult, setEnhancedBulletResult] = useState<any>(null);
+  const [copiedBulletIdx, setCopiedBulletIdx] = useState<number | null>(null);
+
+  const handleEnhanceBullet = async () => {
+    if (!rawBulletInput.trim()) return;
+    try {
+      setEnhancingBullet(true);
+      const res = await api.enhanceResumeBullet(rawBulletInput, bulletContextInput, targetRole);
+      setEnhancedBulletResult(res);
+    } catch (err: any) {
+      alert(err.message || 'Failed to enhance bullet point');
+    } finally {
+      setEnhancingBullet(false);
+    }
+  };
+
+  const handleCopyBullet = (text: string, idx: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedBulletIdx(idx);
+    setTimeout(() => setCopiedBulletIdx(null), 2500);
+  };
+
+  const handleAppendToResume = (bulletText: string) => {
+    setResumeText(prev => `${prev.trim()}\n- ${bulletText}`);
+    alert('✅ Appended enhanced bullet point directly to your resume text!');
+  };
+
   const handleAnalyzeResume = async () => {
     try {
       setAnalyzing(true);
@@ -130,6 +161,15 @@ Requirements:
           }}
         >
           <Sparkles size={15} /> Project Interview Question Generator
+        </button>
+        <button
+          className={`btn btn-sm ${activeTab === 'bullet_enhancer' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => {
+            setActiveTab('bullet_enhancer');
+            if (!enhancedBulletResult) handleEnhanceBullet();
+          }}
+        >
+          <Zap size={15} /> AI XYZ Bullet Point Transformer
         </button>
       </div>
 
@@ -410,6 +450,230 @@ Requirements:
                       ))}
                     </ul>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'bullet_enhancer' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Input Control Box */}
+          <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+                  Google XYZ Formula Bullet Transformer
+                </h3>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                  Recruiters look for the Google formula: <span style={{ color: 'var(--indigo-400)', fontWeight: 600 }}>Accomplished [X], as measured by [Y], by doing [Z]</span>.
+                </p>
+              </div>
+              <span className="badge badge-medium">Tier-1 SDE Placement Standard</span>
+            </div>
+
+            {/* Quick Sample Chips */}
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>Try Samples:</span>
+              <button
+                type="button"
+                className="btn btn-sm btn-secondary"
+                style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem' }}
+                onClick={() => {
+                  setRawBulletInput('Built a facial recognition attendance tracking system using OpenCV and Python');
+                  setBulletContextInput('Computer Vision / Class Attendance');
+                }}
+              >
+                Face Attendance
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-secondary"
+                style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem' }}
+                onClick={() => {
+                  setRawBulletInput('Made a RAG chatbot using LangChain and ChromaDB to answer student queries');
+                  setBulletContextInput('Natural Language Processing / GenAI');
+                }}
+              >
+                RAG Chatbot
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-secondary"
+                style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem' }}
+                onClick={() => {
+                  setRawBulletInput('Implemented REST APIs with PostgreSQL for an e-commerce order management backend');
+                  setBulletContextInput('Backend Engineering / Microservices');
+                }}
+              >
+                REST API Backend
+              </button>
+            </div>
+
+            <div className="grid-2" style={{ gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                  Your Raw Bullet Point (What you currently have):
+                </label>
+                <textarea
+                  className="form-textarea"
+                  rows={3}
+                  value={rawBulletInput}
+                  onChange={(e) => setRawBulletInput(e.target.value)}
+                  placeholder="e.g. Built an attendance tracking system using OpenCV and Python..."
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                  Project Context / Tech Domain:
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={bulletContextInput}
+                  onChange={(e) => setBulletContextInput(e.target.value)}
+                  placeholder="e.g. Distributed Systems, Machine Learning, Full-Stack..."
+                  style={{ marginBottom: '0.75rem' }}
+                />
+                <button
+                  className="btn btn-emerald"
+                  style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                  onClick={handleEnhanceBullet}
+                  disabled={enhancingBullet || !rawBulletInput.trim()}
+                >
+                  {enhancingBullet ? (
+                    <>
+                      <Loader2 size={16} className="spin" /> Transforming with SDE Formula...
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={16} /> Transform Into 3 SDE-Grade Bullets
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Results Display */}
+          {enhancedBulletResult && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Critique Alert */}
+              {enhancedBulletResult.critique && (
+                <div style={{
+                  padding: '0.85rem 1.15rem',
+                  background: 'rgba(245, 158, 11, 0.08)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.84rem',
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <AlertTriangle size={18} style={{ color: 'var(--amber-500)', flexShrink: 0 }} />
+                  <div>
+                    <strong>Recruiter Assessment: </strong>
+                    <span style={{ color: 'var(--text-secondary)' }}>{enhancedBulletResult.critique}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* 3 Enhanced Variants */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {enhancedBulletResult.variants?.map((v: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="glass-card"
+                    style={{
+                      borderLeft: idx === 0 ? '4px solid var(--emerald-500)' : idx === 1 ? '4px solid var(--indigo-500)' : '4px solid var(--amber-500)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.75rem',
+                      padding: '1.25rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span className={`badge ${idx === 0 ? 'badge-success' : idx === 1 ? 'badge-primary' : 'badge-medium'}`}>
+                          {v.label}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          Focus: {v.impact_focus}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          onClick={() => handleCopyBullet(v.bullet, idx)}
+                        >
+                          {copiedBulletIdx === idx ? <Check size={13} style={{ color: 'var(--emerald-500)' }} /> : <Copy size={13} />}
+                          <span>{copiedBulletIdx === idx ? 'Copied!' : 'Copy'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          onClick={() => handleAppendToResume(v.bullet)}
+                        >
+                          <Plus size={13} /> Append to Resume
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{
+                      fontSize: '0.92rem',
+                      color: 'var(--text-primary)',
+                      lineHeight: 1.6,
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      padding: '0.85rem 1rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-subtle)'
+                    }}>
+                      • {v.bullet}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Power Verbs & Resume Tips */}
+              <div className="grid-2">
+                <div className="glass-card" style={{ padding: '1.15rem' }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--indigo-400)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Sparkles size={14} /> Recommended Action Verbs
+                  </h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {enhancedBulletResult.power_verbs?.map((verb: string, i: number) => (
+                      <span
+                        key={i}
+                        className="badge badge-secondary"
+                        style={{ cursor: 'pointer' }}
+                        title="Click to copy verb"
+                        onClick={() => {
+                          navigator.clipboard.writeText(verb);
+                          alert(`Copied "${verb}" to clipboard!`);
+                        }}
+                      >
+                        {verb}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass-card" style={{ padding: '1.15rem' }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--emerald-400)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ShieldCheck size={14} /> Golden Rules for Campus Placements
+                  </h4>
+                  <ul style={{ paddingLeft: '1.15rem', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                    {enhancedBulletResult.tips?.map((tip: string, i: number) => (
+                      <li key={i}>{tip}</li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </div>

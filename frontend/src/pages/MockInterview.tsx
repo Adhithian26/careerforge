@@ -321,6 +321,62 @@ export const MockInterview: React.FC<MockInterviewProps> = ({ currentUser }) => 
               </div>
             )}
 
+            {/* STAR Answer Framework Quick Bar */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0.45rem 0.75rem',
+              background: 'rgba(99, 102, 241, 0.06)',
+              borderRadius: 'var(--radius-sm)',
+              marginBottom: '0.5rem',
+              flexWrap: 'wrap',
+              gap: '6px'
+            }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '0.75rem' }}>
+                <span style={{ fontWeight: 700, color: 'var(--indigo-400)' }}>STAR Format:</span>
+                <span style={{ color: /situation|context|problem/i.test(userAnswer) ? 'var(--emerald-400)' : 'var(--text-muted)' }}>
+                  {/situation|context|problem/i.test(userAnswer) ? '✓' : '○'} [S] Situation
+                </span>
+                <span style={{ color: /task|goal|objective|challenge/i.test(userAnswer) ? 'var(--emerald-400)' : 'var(--text-muted)' }}>
+                  {/task|goal|objective|challenge/i.test(userAnswer) ? '✓' : '○'} [T] Task
+                </span>
+                <span style={{ color: /action|built|implemented|engineered|architected|designed/i.test(userAnswer) ? 'var(--emerald-400)' : 'var(--text-muted)' }}>
+                  {/action|built|implemented|engineered|architected|designed/i.test(userAnswer) ? '✓' : '○'} [A] Action
+                </span>
+                <span style={{ color: /result|metric|reduced|improved|outcome|learned|impact/i.test(userAnswer) ? 'var(--emerald-400)' : 'var(--text-muted)' }}>
+                  {/result|metric|reduced|improved|outcome|learned|impact/i.test(userAnswer) ? '✓' : '○'} [R] Result
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+                onClick={() => {
+                  if (!userAnswer.trim()) {
+                    setUserAnswer(
+`[SITUATION]: We faced a challenge where...
+[TASK]: My specific responsibility was to...
+[ACTION]: I architected and implemented...
+[RESULT]: This led to a measurable improvement of...`
+                    );
+                  } else {
+                    setUserAnswer(prev =>
+`${prev.trim()}
+
+[SITUATION]: 
+[TASK]: 
+[ACTION]: 
+[RESULT]: `
+                    );
+                  }
+                }}
+              >
+                + Insert STAR Template
+              </button>
+            </div>
+
             <textarea
               className="form-textarea"
               rows={6}

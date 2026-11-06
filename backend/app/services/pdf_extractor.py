@@ -44,3 +44,4 @@ def extract_text_from_pdf_bytes(pdf_bytes: bytes) -> str:
     stopwords = {"obj", "endobj", "stream", "endstream", "xref", "trailer", "startxref", "Font", "Type", "Page", "Pages", "Catalog", "FlateDecode"}
     clean_words = [w for w in words if w not in stopwords]
     return " ".join(clean_words[:600])
+

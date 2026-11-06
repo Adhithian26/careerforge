@@ -3,11 +3,14 @@ from backend.app.schemas.ai import (
     ResumeAnalyzeRequest,
     ResumeAnalyzeResponse,
     ProjectInterviewPrepRequest,
-    ProjectInterviewPrepResponse
+    ProjectInterviewPrepResponse,
+    BulletEnhanceRequest,
+    BulletEnhanceResponse
 )
 from backend.app.services.resume_assistant import (
     analyze_resume_alignment,
-    get_project_interview_prep
+    get_project_interview_prep,
+    enhance_resume_bullet
 )
 from backend.app.services.auth_service import get_current_user
 
@@ -51,4 +54,13 @@ def prepare_project_questions(payload: ProjectInterviewPrepRequest):
         project_title=payload.project_title,
         project_description=payload.project_description,
         tech_stack=payload.tech_stack
+    )
+
+@router.post("/enhance-bullet", response_model=BulletEnhanceResponse)
+def enhance_bullet(payload: BulletEnhanceRequest):
+    """Transforms raw bullet points into Google XYZ formula metric-driven statements."""
+    return enhance_resume_bullet(
+        raw_bullet=payload.raw_bullet,
+        project_context=payload.project_context,
+        target_role=payload.target_role
     )
