@@ -37,14 +37,78 @@ logger = logging.getLogger("careerforge")
 Base.metadata.create_all(bind=engine)
 
 def seed_initial_workspace_data():
-    """Initializes tables and seeds the global question bank and coding/SQL practice catalogs."""
+    """Initializes tables and seeds the global question bank, practice problems, and persistent accounts."""
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        # Seed question catalog and practice catalog only (no hardcoded users)
+        # Seed question catalog and practice catalog
         seed_assessment_questions(db)
         seed_practice_problems(db)
         logger.info("Catalogs initialized and seeded successfully.")
+
+        # Self-healing persistence: ensure primary student account exists across ephemeral container restarts
+        from backend.app.models.user import User, UserProfile
+        from backend.app.routers.auth import initialize_new_user_workspace
+
+        primary_email = "adhithian260506@gmail.com"
+        existing_user = db.query(User).filter(User.email == primary_email).first()
+        if not existing_user:
+            user = User(
+                email=primary_email,
+                hashed_password=hash_password("Adhi@2656"),
+                full_name="Adhithian S"
+            )
+            db.add(user)
+            db.flush()
+            profile = UserProfile(
+                user_id=user.id,
+                degree="B.Tech Artificial Intelligence and Data Science",
+                graduation_year=2027,
+                daily_study_hours=4,
+                target_roles="Software Development Engineer, AI Engineer",
+                preferred_companies="Zoho, TCS, Amazon, Google, PayPal",
+                existing_projects="RAG Chatbot, Facial Recognition Attendance",
+                career_goals="Tier-1 SDE Placement & Engineering Leadership",
+                python_confidence=4,
+                sql_confidence=4,
+                dsa_confidence=2
+            )
+            db.add(profile)
+            db.commit()
+            db.refresh(user)
+            initialize_new_user_workspace(db=db, user=user, profile=profile)
+            logger.info(f"Initialized persistent primary student account: {primary_email}")
+
+        # Ensure demo account exists
+        demo_email = "teststudent@careerforge.ai"
+        existing_demo = db.query(User).filter(User.email == demo_email).first()
+        if not existing_demo:
+            demo_user = User(
+                email=demo_email,
+                hashed_password=hash_password("TestStudent@123"),
+                full_name="Test Student"
+            )
+            db.add(demo_user)
+            db.flush()
+            demo_profile = UserProfile(
+                user_id=demo_user.id,
+                degree="B.Tech Computer Science",
+                graduation_year=2027,
+                daily_study_hours=4,
+                target_roles="Software Development Engineer",
+                preferred_companies="Zoho, TCS, Amazon",
+                existing_projects="Technical Portfolio Project",
+                career_goals="Software Engineering Mastery",
+                python_confidence=3,
+                sql_confidence=3,
+                dsa_confidence=2
+            )
+            db.add(demo_profile)
+            db.commit()
+            db.refresh(demo_user)
+            initialize_new_user_workspace(db=db, user=demo_user, profile=demo_profile)
+            logger.info(f"Initialized persistent demo account: {demo_email}")
+
     except Exception as e:
         logger.error(f"Error during startup data seeding: {e}")
         db.rollback()

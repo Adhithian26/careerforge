@@ -160,6 +160,60 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     """Authenticates existing user and returns JWT token."""
     email_clean = str(request.email).strip().lower()
     user = db.query(User).filter(User.email == email_clean).first()
+
+    # Self-healing on ephemeral container restarts
+    if not user:
+        if email_clean == "adhithian260506@gmail.com" and request.password.strip() == "Adhi@2656":
+            user = User(
+                email=email_clean,
+                hashed_password=hash_password("Adhi@2656"),
+                full_name="Adhithian S"
+            )
+            db.add(user)
+            db.flush()
+            profile = UserProfile(
+                user_id=user.id,
+                degree="B.Tech Artificial Intelligence and Data Science",
+                graduation_year=2027,
+                daily_study_hours=4,
+                target_roles="Software Development Engineer, AI Engineer",
+                preferred_companies="Zoho, TCS, Amazon, Google, PayPal",
+                existing_projects="RAG Chatbot, Facial Recognition Attendance",
+                career_goals="Tier-1 SDE Placement & Engineering Leadership",
+                python_confidence=4,
+                sql_confidence=4,
+                dsa_confidence=2
+            )
+            db.add(profile)
+            db.commit()
+            db.refresh(user)
+            initialize_new_user_workspace(db=db, user=user, profile=profile)
+        elif email_clean == "teststudent@careerforge.ai" and request.password.strip() == "TestStudent@123":
+            user = User(
+                email=email_clean,
+                hashed_password=hash_password("TestStudent@123"),
+                full_name="Test Student"
+            )
+            db.add(user)
+            db.flush()
+            profile = UserProfile(
+                user_id=user.id,
+                degree="B.Tech Computer Science",
+                graduation_year=2027,
+                daily_study_hours=4,
+                target_roles="Software Development Engineer",
+                preferred_companies="Zoho, TCS, Amazon",
+                existing_projects="Technical Portfolio Project",
+                career_goals="Software Engineering Mastery",
+                python_confidence=3,
+                sql_confidence=3,
+                dsa_confidence=2
+            )
+            db.add(profile)
+            db.commit()
+            db.refresh(user)
+            initialize_new_user_workspace(db=db, user=user, profile=profile)
+
     if not user or not verify_password(request.password.strip(), user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
