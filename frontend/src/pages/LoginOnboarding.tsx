@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import {
   Sparkles,
   ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
   User,
   Lock,
   Mail,
@@ -12,12 +10,10 @@ import {
   GraduationCap,
   Briefcase,
   Clock,
-  Server,
   Zap,
-  Check,
   Target
 } from 'lucide-react';
-import { api, getApiBase, setApiBase } from '../api/client';
+import { api } from '../api/client';
 
 interface LoginOnboardingProps {
   onSuccess: () => void;
@@ -48,32 +44,6 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
   ]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const [showServerConfig, setShowServerConfig] = useState(false);
-  const [serverUrl, setServerUrl] = useState(getApiBase());
-  const [serverStatus, setServerStatus] = useState<string | null>(null);
-
-  const testServerConnection = async (targetOverride?: string) => {
-    const urlToTest = (targetOverride || serverUrl).trim().replace(/\/+$/, '');
-    setServerStatus('Testing connection...');
-    try {
-      setApiBase(urlToTest);
-      setServerUrl(urlToTest);
-      const res = await fetch(`${urlToTest}/health`);
-      if (res.ok) {
-        setServerStatus(`✅ Connected (${urlToTest.includes('localhost') ? 'Local Server' : 'Cloud Server'})`);
-      } else {
-        setServerStatus(`⚠️ Server returned HTTP ${res.status}`);
-      }
-    } catch (e: any) {
-      setServerStatus(`❌ Connection failed: ${e.message || 'Offline'}`);
-    }
-  };
-
-  const handleSelectServerPreset = (presetUrl: string) => {
-    setServerUrl(presetUrl);
-    testServerConnection(presetUrl);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,13 +98,9 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
             <div className="login-brand-icon">
               <Sparkles size={28} />
             </div>
-            <div className="login-status-tag">
-              <span className="login-status-dot" />
-              <span>SDE Preparation Engine • Class of 2027</span>
-            </div>
             <h1 className="login-title">CareerForge AI</h1>
             <p className="login-subtitle">
-              Autonomous Career Intelligence, Adaptive 4-Hour Daily Curriculum & SDE Mastery
+              Autonomous Career Intelligence & SDE Mastery
             </p>
           </div>
 
@@ -456,84 +422,57 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
             </button>
           </form>
 
-          {/* Mode Switch Helper Card */}
-          <div className="login-quick-card">
-            <div className="quick-card-header">
-              <span className="quick-badge">{isRegister ? 'New Student Registration' : 'Autonomous SDE Preparation'}</span>
-            </div>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.5rem 0 0.85rem 0', lineHeight: 1.5 }}>
-              {isRegister
-                ? 'Creating an account customizes your 4-hour daily curriculum, topic benchmarks (Python, SQL, DSA), mock interview simulator, and verified job tracker.'
-                : 'Sign in with your registered email to continue your daily preparation sprint and track your SDE readiness.'}
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegister(!isRegister);
-                setErrorMessage(null);
-              }}
-              className="quick-fill-btn"
-              style={{ width: '100%', justifyContent: 'center', cursor: 'pointer' }}
-            >
-              <Zap size={14} />
-              <span>{isRegister ? 'Already registered? Switch to Sign In' : 'New student? Create a New Account'}</span>
-            </button>
-          </div>
-
-          {/* Server Config Accordion */}
-          <div className="server-config-section">
-            <button
-              type="button"
-              className="server-config-toggle"
-              onClick={() => setShowServerConfig(!showServerConfig)}
-            >
-              <Server size={14} />
-              <span>{showServerConfig ? 'Hide Backend Endpoint' : 'Backend Server Settings'}</span>
-            </button>
-
-            {showServerConfig && (
-              <div className="server-config-box">
-                <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectServerPreset('http://localhost:8000/api/v1')}
-                    className="btn btn-secondary btn-sm"
-                    style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}
-                  >
-                    Local (localhost:8000)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectServerPreset('https://careerforge-3s9a.onrender.com/api/v1')}
-                    className="btn btn-secondary btn-sm"
-                    style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}
-                  >
-                    Cloud (Render live)
-                  </button>
-                </div>
-                <label className="form-label">Active API Base URL:</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={serverUrl}
-                  onChange={(e) => setServerUrl(e.target.value)}
-                  placeholder="http://localhost:8000/api/v1"
-                />
-                <div className="server-status-row">
-                  <button
-                    type="button"
-                    onClick={() => testServerConnection()}
-                    className="btn btn-secondary btn-sm"
-                  >
-                    Test & Save URL
-                  </button>
-                  {serverStatus && (
-                    <span className="server-status-text">
-                      {serverStatus}
-                    </span>
-                  )}
-                </div>
-              </div>
+          {/* Subtle Switch Mode Helper */}
+          <div style={{
+            textAlign: 'center',
+            marginTop: '1.25rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid var(--border-subtle)',
+            fontSize: '0.85rem',
+            color: 'var(--text-secondary)'
+          }}>
+            {isRegister ? (
+              <span>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegister(false);
+                    setErrorMessage(null);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--indigo-500)',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                >
+                  Sign In
+                </button>
+              </span>
+            ) : (
+              <span>
+                New to CareerForge?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegister(true);
+                    setErrorMessage(null);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--indigo-500)',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                >
+                  Create an account
+                </button>
+              </span>
             )}
           </div>
         </div>
