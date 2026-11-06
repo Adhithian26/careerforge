@@ -12,30 +12,57 @@ from backend.app.services.study_planner import generate_weekly_study_plan
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-def initialize_new_user_workspace(db: Session, user: User, profile: UserProfile):
+def initialize_new_user_workspace(
+    db: Session,
+    user: User,
+    profile: UserProfile,
+    custom_metrics: any = None
+):
     """Initializes a rich, personalized workspace for newly registered students."""
-    # 1. Baseline Skill Metrics based on self-reported confidence
-    baseline_metrics = [
-        ("Python", profile.python_confidence or 3, min(100.0, max(20.0, float(profile.python_confidence or 3) * 22.0))),
-        ("SQL", profile.sql_confidence or 3, min(100.0, max(20.0, float(profile.sql_confidence or 3) * 20.0))),
-        ("DSA", profile.dsa_confidence or 1, min(100.0, max(15.0, float(profile.dsa_confidence or 1) * 25.0))),
-        ("Aptitude", 3, 65.0),
-        ("OOP", 3, 70.0),
-        ("DBMS", 3, 65.0),
-        ("Operating Systems", 2, 55.0),
-        ("Computer Networks", 2, 50.0)
-    ]
-    for topic, conf, prof in baseline_metrics:
-        metric = UserSkillMetric(
-            user_id=user.id,
-            topic=topic,
-            subjective_confidence=conf,
-            measured_proficiency=prof,
-            attempts_count=1,
-            total_questions_answered=5,
-            total_correct_answered=max(1, int(5 * (prof / 100.0)))
-        )
-        db.add(metric)
+    # 1. Skill Metrics from user input
+    if custom_metrics and len(custom_metrics) > 0:
+        for sm in custom_metrics:
+            topic_name = getattr(sm, 'topic', None) if hasattr(sm, 'topic') else sm.get('topic')
+            prof = float(getattr(sm, 'measured_proficiency', None) if hasattr(sm, 'measured_proficiency') else sm.get('measured_proficiency', 50.0))
+            conf = int(getattr(sm, 'subjective_confidence', None) if hasattr(sm, 'subjective_confidence') else sm.get('subjective_confidence', 3))
+            if not topic_name:
+                continue
+            metric = UserSkillMetric(
+                user_id=user.id,
+                topic=topic_name.strip(),
+                subjective_confidence=max(1, min(5, conf)),
+                measured_proficiency=max(0.0, min(100.0, prof)),
+                attempts_count=1,
+                total_questions_answered=10,
+                total_correct_answered=int(round(10 * (prof / 100.0)))
+            )
+            db.add(metric)
+    else:
+        # Fallback to user's registered confidence ratings
+        p_conf = profile.python_confidence or 3
+        s_conf = profile.sql_confidence or 3
+        d_conf = profile.dsa_confidence or 1
+        baseline_metrics = [
+            ("Python", p_conf, min(100.0, float(p_conf) * 20.0)),
+            ("SQL", s_conf, min(100.0, float(s_conf) * 20.0)),
+            ("DSA", d_conf, min(100.0, float(d_conf) * 20.0)),
+            ("Aptitude", 3, 60.0),
+            ("OOP", 3, 65.0),
+            ("DBMS", 3, 60.0),
+            ("Operating Systems", 2, 50.0),
+            ("Computer Networks", 2, 50.0)
+        ]
+        for topic, conf, prof in baseline_metrics:
+            metric = UserSkillMetric(
+                user_id=user.id,
+                topic=topic,
+                subjective_confidence=conf,
+                measured_proficiency=prof,
+                attempts_count=1,
+                total_questions_answered=5,
+                total_correct_answered=max(1, int(5 * (prof / 100.0)))
+            )
+            db.add(metric)
 
     # 2. Seed default target job applications based on preferred companies
     preferred_raw = profile.preferred_companies or "Zoho, TCS, Amazon"
@@ -78,7 +105,8 @@ def initialize_new_user_workspace(db: Session, user: User, profile: UserProfile)
 @router.post("/register", response_model=Token)
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
     """Registers a new user and sets up their tailored SDE preparation workspace."""
-    existing = db.query(User).filter(User.email == request.email.lower()).first()
+    email_clean = str(request.email).strip().lower()
+    existing = db.query(User).filter(User.email == email_clean).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -86,9 +114,9 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
         )
 
     new_user = User(
-        email=request.email.lower(),
-        hashed_password=hash_password(request.password),
-        full_name=request.full_name
+        email=email_clean,
+        hashed_password=hash_password(request.password.strip()),
+        full_name=request.full_name.strip()
     )
     db.add(new_user)
     db.flush()
@@ -100,6 +128,8 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
         daily_study_hours=request.daily_study_hours or 4,
         target_roles=request.target_roles or "Software Development Engineer",
         preferred_companies=request.preferred_companies or "Zoho, TCS, Amazon, Google, PayPal",
+        existing_projects=request.existing_projects or "Technical Portfolio Projects",
+        career_goals=request.career_goals or "Software Engineering Placement & Mastery",
         python_confidence=request.python_confidence or 3,
         sql_confidence=request.sql_confidence or 3,
         dsa_confidence=request.dsa_confidence or 1
@@ -109,7 +139,12 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
     db.refresh(new_user)
 
     # Initialize complete personal curriculum & metrics
-    initialize_new_user_workspace(db=db, user=new_user, profile=new_profile)
+    initialize_new_user_workspace(
+        db=db,
+        user=new_user,
+        profile=new_profile,
+        custom_metrics=request.skill_metrics
+    )
 
     token = create_access_token(subject=new_user.id)
     return Token(
@@ -123,8 +158,9 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     """Authenticates existing user and returns JWT token."""
-    user = db.query(User).filter(User.email == request.email.lower()).first()
-    if not user or not verify_password(request.password, user.hashed_password):
+    email_clean = str(request.email).strip().lower()
+    user = db.query(User).filter(User.email == email_clean).first()
+    if not user or not verify_password(request.password.strip(), user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password."

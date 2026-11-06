@@ -1,32 +1,47 @@
-import React, { useState } from 'react';
-import { FileText, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, HelpCircle, Plus } from 'lucide-react';
 import { api } from '../api/client';
+import { User } from '../types';
 
-export const ResumeAssistant: React.FC = () => {
+interface ResumeAssistantProps {
+  currentUser?: User | null;
+}
+
+export const ResumeAssistant: React.FC<ResumeAssistantProps> = ({ currentUser }) => {
   const [activeTab, setActiveTab] = useState<'resume_match' | 'project_prep'>('resume_match');
+
+  const studentName = currentUser?.full_name || 'Student Candidate';
+  const studentDegree = currentUser?.profile?.degree || 'B.Tech AI & Data Science';
+  const studentYear = currentUser?.profile?.graduation_year || 2027;
+  const targetRole = currentUser?.profile?.target_roles || 'Software Development Engineer';
+  const targetCompanies = currentUser?.profile?.preferred_companies || 'Zoho, TCS, Amazon, PayPal';
+  const rawProjects = currentUser?.profile?.existing_projects || 'RAG Chatbot, Facial Recognition Attendance';
+  const parsedProjects = rawProjects.split(',').map(p => p.trim()).filter(Boolean);
 
   // Resume Matcher State
   const [resumeText, setResumeText] = useState(
-`Adhithian S - B.Tech Artificial Intelligence & Data Science (2027)
-Skills: Python, SQL, REST APIs, Git, Data Structures, OOP, SQLite.
+`${studentName} - ${studentDegree} (${studentYear})
+Skills: Python, SQL, REST APIs, Git, Data Structures & Algorithms, OOP, Relational Databases.
 Projects:
-1. RAG Chatbot: Engineered a retrieval-augmented generation assistant with LangChain, embeddings, and vector similarity search.
-2. Facial Recognition Attendance System: Built computer vision face detection pipeline with OpenCV and Euclidean distance verification.`
+${parsedProjects.map((p, idx) => `${idx + 1}. ${p}: Designed and implemented modular architecture with automated test suites and error handling.`).join('\n')}`
   );
+
   const [jobDescription, setJobDescription] = useState(
-`Software Development Engineer I (SDE 1) - Zoho / Amazon / PayPal
+`${targetRole} - ${targetCompanies}
 Requirements:
 - Strong proficiency in Python, SQL, and Object-Oriented Programming (OOP)
 - Solid foundation in Data Structures and Algorithms (DSA)
-- Experience designing RESTful APIs with FastAPI or Django
-- Knowledge of relational databases (PostgreSQL/SQLite) and Docker containers
-- Excellent communication and systematic problem-solving skills.`
+- Experience designing RESTful APIs with FastAPI, Django, or modern frameworks
+- Knowledge of relational databases and system modularity
+- Clear technical communication and systematic analytical problem-solving skills.`
   );
+
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [analyzing, setAnalyzing] = useState(false);
 
   // Project Interview Questions State
-  const [selectedProject, setSelectedProject] = useState('RAG Chatbot');
+  const [selectedProject, setSelectedProject] = useState(parsedProjects[0] || 'Technical Project');
+  const [customProjectInput, setCustomProjectInput] = useState('');
   const [projectQuestions, setProjectQuestions] = useState<any>(null);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
@@ -43,6 +58,7 @@ Requirements:
   };
 
   const handleFetchProjectQuestions = async (title: string) => {
+    if (!title.trim()) return;
     try {
       setLoadingQuestions(true);
       setSelectedProject(title);
@@ -54,6 +70,12 @@ Requirements:
       setLoadingQuestions(false);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'project_prep' && !projectQuestions) {
+      handleFetchProjectQuestions(selectedProject);
+    }
+  }, [activeTab]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -186,21 +208,43 @@ Requirements:
 
       {activeTab === 'project_prep' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Project Choice Buttons */}
-          <div className="glass-card" style={{ padding: '1rem 1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>Select Project:</span>
-            <button
-              className={`btn btn-sm ${selectedProject === 'RAG Chatbot' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => handleFetchProjectQuestions('RAG Chatbot')}
-            >
-              1. RAG Chatbot (LangChain & Vector Store)
-            </button>
-            <button
-              className={`btn btn-sm ${selectedProject === 'Facial Recognition Attendance' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => handleFetchProjectQuestions('Facial Recognition Attendance')}
-            >
-              2. Facial Recognition Attendance System (OpenCV)
-            </button>
+          {/* Project Choice Buttons & Custom Project Input */}
+          <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>Your Projects:</span>
+              {parsedProjects.map((proj, idx) => (
+                <button
+                  key={idx}
+                  className={`btn btn-sm ${selectedProject === proj ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => handleFetchProjectQuestions(proj)}
+                >
+                  {idx + 1}. {proj}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Or type any project title (e.g. Distributed Key-Value Store, E-commerce Microservice)..."
+                value={customProjectInput}
+                onChange={(e) => setCustomProjectInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && customProjectInput.trim()) {
+                    handleFetchProjectQuestions(customProjectInput.trim());
+                  }
+                }}
+                style={{ flex: 1 }}
+              />
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => handleFetchProjectQuestions(customProjectInput.trim())}
+                disabled={loadingQuestions || !customProjectInput.trim()}
+              >
+                <Plus size={14} /> Generate Questions
+              </button>
+            </div>
           </div>
 
           {projectQuestions && (

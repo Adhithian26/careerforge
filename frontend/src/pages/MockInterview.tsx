@@ -1,15 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Mic, CheckCircle2, Award, Clock, ArrowRight, RefreshCw, MessageSquare } from 'lucide-react';
 import { api } from '../api/client';
-import { InterviewSession } from '../types';
+import { InterviewSession, User } from '../types';
 
-export const MockInterview: React.FC = () => {
+interface MockInterviewProps {
+  currentUser?: User | null;
+}
+
+export const MockInterview: React.FC<MockInterviewProps> = ({ currentUser }) => {
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [activeSession, setActiveSession] = useState<InterviewSession | null>(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [selectedMode, setSelectedMode] = useState('Technical');
-  const [targetCompany, setTargetCompany] = useState('Zoho / Amazon / General Product');
-  const [roleTitle, setRoleTitle] = useState('Software Development Engineer');
+
+  const preferredList = currentUser?.profile?.preferred_companies
+    ? currentUser.profile.preferred_companies.split(',').map(c => c.trim()).filter(Boolean)
+    : [];
+  const defaultCompany = preferredList[0] || 'Zoho';
+  const defaultRole = currentUser?.profile?.target_roles || 'Software Development Engineer';
+
+  const [targetCompany, setTargetCompany] = useState(defaultCompany);
+  const [customCompany, setCustomCompany] = useState('');
+  const [roleTitle, setRoleTitle] = useState(defaultRole);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -32,7 +44,8 @@ export const MockInterview: React.FC = () => {
   const handleStartInterview = async () => {
     try {
       setSubmitting(true);
-      const newSession = await api.startInterview(roleTitle, targetCompany, selectedMode);
+      const finalCompany = targetCompany === 'Other' && customCompany.trim() ? customCompany.trim() : targetCompany;
+      const newSession = await api.startInterview(roleTitle, finalCompany, selectedMode);
       setActiveSession(newSession);
       setUserAnswer('');
     } catch (err: any) {
@@ -232,12 +245,29 @@ export const MockInterview: React.FC = () => {
                 value={targetCompany}
                 onChange={(e) => setTargetCompany(e.target.value)}
               >
-                <option value="Zoho">Zoho Corporation (Logic & Problem Solving)</option>
-                <option value="Amazon">Amazon (DSA & Leadership Principles)</option>
-                <option value="TCS">TCS Digital / Prime (Aptitude & Core CS)</option>
-                <option value="PayPal">PayPal (System Design & Code Quality)</option>
+                {preferredList.map((comp, idx) => (
+                  <option key={idx} value={comp}>
+                    {comp} (From Your Preferred Profile)
+                  </option>
+                ))}
+                {!preferredList.includes('Zoho') && <option value="Zoho">Zoho Corporation (Logic & Problem Solving)</option>}
+                {!preferredList.includes('Amazon') && <option value="Amazon">Amazon (DSA & Leadership Principles)</option>}
+                {!preferredList.includes('TCS') && <option value="TCS">TCS Digital / Prime (Aptitude & Core CS)</option>}
+                {!preferredList.includes('PayPal') && <option value="PayPal">PayPal (System Design & Code Quality)</option>}
                 <option value="General Product Company">General Tier-1 Product Company</option>
+                <option value="Other">Other / Custom Employer</option>
               </select>
+
+              {targetCompany === 'Other' && (
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ marginTop: '0.5rem' }}
+                  placeholder="Type target company name..."
+                  value={customCompany}
+                  onChange={(e) => setCustomCompany(e.target.value)}
+                />
+              )}
             </div>
 
             <div>

@@ -258,6 +258,12 @@ def tool_generate_weekly_summary(user_id: str) -> Dict[str, Any]:
         applications = db.query(JobApplication).filter(JobApplication.user_id == user_id).all()
         applied_count = sum(1 for a in applications if a.status in ["applied", "assessment", "interview", "offer"])
 
+        profile = user.profile
+        hours = profile.daily_study_hours if profile else 4
+        dsa_mins = max(30, int(hours * 60 * 0.35))
+        proj_name = profile.existing_projects.split(',')[0].strip() if profile and profile.existing_projects else "Technical Project"
+        target_role = profile.target_roles if profile else "Software Development Engineer"
+
         return {
             "week_start": (date.today() - timedelta(days=6)).isoformat(),
             "week_end": date.today().isoformat(),
@@ -272,9 +278,9 @@ def tool_generate_weekly_summary(user_id: str) -> Dict[str, Any]:
             "identified_weaknesses": weaknesses if weaknesses else ["DSA (Requires systematic Two-Pointer & Sliding Window baseline)"],
             "strengths": strengths,
             "next_week_priorities": [
-                "Prioritize 75 mins daily DSA practice on two pointers and hash maps.",
+                f"Prioritize {dsa_mins} mins daily DSA practice on two pointers and hash maps.",
                 "Complete SQL multi-table JOINs and window functions exercises.",
-                "Conduct 1 mock technical interview on RAG chatbot architecture."
+                f"Conduct 1 mock technical interview for {target_role} on {proj_name} architecture."
             ]
         }
     finally:

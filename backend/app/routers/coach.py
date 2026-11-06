@@ -21,13 +21,17 @@ def chat_with_career_coach(
     """
     profile = current_user.profile
     profile_data = {
+        "full_name": current_user.full_name,
         "degree": profile.degree if profile else "B.Tech AI & Data Science",
         "graduation_year": profile.graduation_year if profile else 2027,
         "daily_study_hours": profile.daily_study_hours if profile else 4,
         "python_confidence": profile.python_confidence if profile else 3,
         "sql_confidence": profile.sql_confidence if profile else 3,
         "dsa_confidence": profile.dsa_confidence if profile else 1,
-        "target_roles": profile.target_roles if profile else "Software Development Engineer"
+        "target_roles": profile.target_roles if profile else "Software Development Engineer",
+        "preferred_companies": profile.preferred_companies if profile else "Zoho, TCS, Amazon",
+        "career_goals": profile.career_goals if profile else "Industry Experience & Engineering Mastery",
+        "existing_projects": profile.existing_projects if profile else "Technical Portfolio Projects"
     }
 
     metrics = db.query(UserSkillMetric).filter(UserSkillMetric.user_id == current_user.id).all()

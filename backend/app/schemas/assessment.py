@@ -65,3 +65,12 @@ class SkillMetricResponse(BaseModel):
 class UpdateConfidenceRequest(BaseModel):
     topic: str
     confidence: int  # 1 to 5
+
+class UpdateSkillMetricItem(BaseModel):
+    topic: str
+    measured_proficiency: float  # 0 to 100
+    subjective_confidence: int   # 1 to 5
+
+class CalibrateSkillMetricsRequest(BaseModel):
+    metrics: List[UpdateSkillMetricItem]
+    regenerate_plan: Optional[bool] = False

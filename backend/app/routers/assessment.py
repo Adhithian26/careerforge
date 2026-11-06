@@ -11,7 +11,9 @@ from backend.app.schemas.assessment import (
     AssessmentResultResponse,
     AnswerResultDetail,
     SkillMetricResponse,
-    UpdateConfidenceRequest
+    UpdateConfidenceRequest,
+    UpdateSkillMetricItem,
+    CalibrateSkillMetricsRequest
 )
 from backend.app.services.auth_service import get_current_user
 
@@ -74,6 +76,83 @@ def update_subjective_confidence(
 
     db.commit()
     return {"message": f"Updated subjective confidence for {payload.topic} to {payload.confidence}/5."}
+
+@router.post("/calibrate")
+def calibrate_skill_metrics(
+    payload: CalibrateSkillMetricsRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Allows user to customize/personalize their measured proficiency and subjective confidence for each topic."""
+    updated_topics = []
+    weak_topics = []
+
+    for item in payload.metrics:
+        topic_name = item.topic.strip()
+        if not topic_name:
+            continue
+        prof = max(0.0, min(100.0, round(float(item.measured_proficiency), 1)))
+        conf = max(1, min(5, int(item.subjective_confidence)))
+
+        if prof < 50.0 or conf <= 2:
+            weak_topics.append(topic_name)
+
+        metric = db.query(UserSkillMetric).filter(
+            UserSkillMetric.user_id == current_user.id,
+            UserSkillMetric.topic.ilike(topic_name)
+        ).first()
+
+        if not metric:
+            metric = UserSkillMetric(
+                user_id=current_user.id,
+                topic=topic_name,
+                measured_proficiency=prof,
+                subjective_confidence=conf,
+                attempts_count=1,
+                total_questions_answered=10,
+                total_correct_answered=int(round(10 * (prof / 100.0))),
+                last_assessed_at=datetime.utcnow()
+            )
+            db.add(metric)
+        else:
+            metric.measured_proficiency = prof
+            metric.subjective_confidence = conf
+            metric.attempts_count = max(metric.attempts_count, 1)
+            metric.total_questions_answered = max(metric.total_questions_answered or 10, 10)
+            metric.total_correct_answered = int(round(metric.total_questions_answered * (prof / 100.0)))
+            metric.last_assessed_at = datetime.utcnow()
+        updated_topics.append(topic_name)
+
+    db.commit()
+
+    if payload.regenerate_plan:
+        from backend.app.services.study_planner import generate_weekly_study_plan
+        profile = current_user.profile
+        daily_hours = float(profile.daily_study_hours if profile and profile.daily_study_hours else 4.0)
+        generate_weekly_study_plan(db=db, user_id=current_user.id, daily_hours=daily_hours)
+
+    return {
+        "message": f"Successfully personalized metrics for {len(updated_topics)} topics.",
+        "updated_topics": updated_topics,
+        "weak_topics": weak_topics
+    }
+
+@router.delete("/topic/{topic_name}")
+def delete_user_skill_metric(
+    topic_name: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Removes a skill metric topic for the current user."""
+    metric = db.query(UserSkillMetric).filter(
+        UserSkillMetric.user_id == current_user.id,
+        UserSkillMetric.topic.ilike(topic_name)
+    ).first()
+    if metric:
+        db.delete(metric)
+        db.commit()
+        return {"message": f"Removed {topic_name} from skill metrics."}
+    return {"message": "Topic not found."}
 
 @router.get("/questions/{topic}", response_model=List[AssessmentQuestionResponse])
 def get_assessment_questions(

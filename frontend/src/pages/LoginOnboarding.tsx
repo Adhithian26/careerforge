@@ -14,7 +14,8 @@ import {
   Clock,
   Server,
   Zap,
-  Check
+  Check,
+  Target
 } from 'lucide-react';
 import { api, getApiBase, setApiBase } from '../api/client';
 
@@ -31,7 +32,20 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
   const [degree, setDegree] = useState('B.Tech Artificial Intelligence and Data Science');
   const [graduationYear, setGraduationYear] = useState(2027);
   const [studyHours, setStudyHours] = useState(4);
+  const [targetRoles, setTargetRoles] = useState('Software Development Engineer');
   const [targetCompanies, setTargetCompanies] = useState('Zoho, TCS, Amazon, Google, PayPal');
+  const [existingProjects, setExistingProjects] = useState('RAG Chatbot, Facial Recognition Attendance');
+  const [careerGoals, setCareerGoals] = useState('SDE Placement then Advanced Engineering Leadership');
+  const [skillInputs, setSkillInputs] = useState<Array<{ topic: string; measured_proficiency: number; subjective_confidence: number }>>([
+    { topic: 'DSA', measured_proficiency: 35, subjective_confidence: 2 },
+    { topic: 'Python', measured_proficiency: 65, subjective_confidence: 3 },
+    { topic: 'SQL', measured_proficiency: 60, subjective_confidence: 3 },
+    { topic: 'Aptitude', measured_proficiency: 65, subjective_confidence: 3 },
+    { topic: 'OOP', measured_proficiency: 70, subjective_confidence: 3 },
+    { topic: 'DBMS', measured_proficiency: 65, subjective_confidence: 3 },
+    { topic: 'Operating Systems', measured_proficiency: 55, subjective_confidence: 2 },
+    { topic: 'Computer Networks', measured_proficiency: 50, subjective_confidence: 2 }
+  ]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -39,14 +53,15 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
   const [serverUrl, setServerUrl] = useState(getApiBase());
   const [serverStatus, setServerStatus] = useState<string | null>(null);
 
-  const testServerConnection = async () => {
+  const testServerConnection = async (targetOverride?: string) => {
+    const urlToTest = (targetOverride || serverUrl).trim().replace(/\/+$/, '');
     setServerStatus('Testing connection...');
     try {
-      const cleanUrl = serverUrl.trim().replace(/\/+$/, '');
-      setApiBase(cleanUrl);
-      const res = await fetch(`${cleanUrl}/health`);
+      setApiBase(urlToTest);
+      setServerUrl(urlToTest);
+      const res = await fetch(`${urlToTest}/health`);
       if (res.ok) {
-        setServerStatus('✅ Connected to CareerForge Backend (Healthy)');
+        setServerStatus(`✅ Connected (${urlToTest.includes('localhost') ? 'Local Server' : 'Cloud Server'})`);
       } else {
         setServerStatus(`⚠️ Server returned HTTP ${res.status}`);
       }
@@ -55,27 +70,43 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
     }
   };
 
+  const handleSelectServerPreset = (presetUrl: string) => {
+    setServerUrl(presetUrl);
+    testServerConnection(presetUrl);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setLoading(true);
 
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
     try {
       if (isRegister) {
+        const dsaItem = skillInputs.find(s => s.topic === 'DSA');
+        const pyItem = skillInputs.find(s => s.topic === 'Python');
+        const sqlItem = skillInputs.find(s => s.topic === 'SQL');
+
         await api.register({
-          email: email.trim(),
-          password,
-          full_name: fullName.trim(),
-          degree,
+          email: cleanEmail,
+          password: cleanPassword,
+          full_name: fullName.trim() || 'Student',
+          degree: degree.trim() || 'Engineering',
           graduation_year: graduationYear,
           daily_study_hours: studyHours,
-          preferred_companies: targetCompanies,
-          python_confidence: 3,
-          sql_confidence: 3,
-          dsa_confidence: 1
+          target_roles: targetRoles.trim() || 'Software Development Engineer',
+          preferred_companies: targetCompanies.trim() || 'Zoho, TCS, Amazon',
+          existing_projects: existingProjects.trim(),
+          career_goals: careerGoals.trim(),
+          python_confidence: pyItem ? pyItem.subjective_confidence : 3,
+          sql_confidence: sqlItem ? sqlItem.subjective_confidence : 3,
+          dsa_confidence: dsaItem ? dsaItem.subjective_confidence : 1,
+          skill_metrics: skillInputs
         });
       } else {
-        await api.login(email.trim(), password);
+        await api.login(cleanEmail, cleanPassword);
       }
       onSuccess();
     } catch (err: any) {
@@ -135,6 +166,19 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
           {errorMessage && (
             <div className="login-error-banner" role="alert">
               <div className="login-error-text">{errorMessage}</div>
+              {errorMessage.toLowerCase().includes('already exists') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegister(false);
+                    setErrorMessage(null);
+                  }}
+                  className="btn btn-sm btn-secondary"
+                  style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.75rem' }}
+                >
+                  Switch to Sign In with this Email
+                </button>
+              )}
             </div>
           )}
 
@@ -253,6 +297,20 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
                 <div className="form-group">
                   <label className="form-label">
                     <Briefcase size={14} />
+                    <span>Target Roles</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={targetRoles}
+                    onChange={(e) => setTargetRoles(e.target.value)}
+                    placeholder="e.g. Software Development Engineer, AI Engineer"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    <Briefcase size={14} />
                     <span>Target Companies</span>
                   </label>
                   <input
@@ -260,8 +318,119 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
                     className="form-input"
                     value={targetCompanies}
                     onChange={(e) => setTargetCompanies(e.target.value)}
-                    placeholder="Zoho, TCS, Amazon, Google, PayPal"
+                    placeholder="e.g. Zoho, TCS, Amazon, Google, PayPal"
                   />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    <Sparkles size={14} />
+                    <span>Your Projects / Portfolio</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={existingProjects}
+                    onChange={(e) => setExistingProjects(e.target.value)}
+                    placeholder="e.g. RAG Chatbot, Portfolio Web App"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    <Target size={14} />
+                    <span>Primary Career Goal</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={careerGoals}
+                    onChange={(e) => setCareerGoals(e.target.value)}
+                    placeholder="e.g. Tier-1 SDE Placement, Research & Academia"
+                  />
+                </div>
+
+                {/* Baseline Skill Self-Evaluation */}
+                <div style={{
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid var(--border-subtle)',
+                  marginTop: '0.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.85rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <label className="form-label" style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem' }}>
+                      <Zap size={14} style={{ color: 'var(--amber-500)' }} />
+                      <span>Your Baseline Skill Metrics (%)</span>
+                    </label>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      Adjust your starting proficiency
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    {skillInputs.map((sk, sidx) => {
+                      const color = sk.measured_proficiency >= 70 ? 'var(--emerald-500)' : sk.measured_proficiency >= 50 ? 'var(--amber-500)' : 'var(--rose-500)';
+                      return (
+                        <div key={sk.topic} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                            <span style={{ fontWeight: 600 }}>{sk.topic}</span>
+                            <span>
+                              <strong style={{ color }}>{sk.measured_proficiency}%</strong>
+                              <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>(Confidence: {sk.subjective_confidence}/5)</span>
+                            </span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.65rem', alignItems: 'center' }}>
+                            <input
+                              type="range"
+                              min={0}
+                              max={100}
+                              value={sk.measured_proficiency}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value) || 0;
+                                const updated = [...skillInputs];
+                                updated[sidx].measured_proficiency = val;
+                                updated[sidx].subjective_confidence = Math.max(1, Math.min(5, Math.ceil(val / 20)));
+                                setSkillInputs(updated);
+                              }}
+                              style={{ width: '100%', accentColor: color }}
+                            />
+                            <div style={{ display: 'flex', gap: '2px' }}>
+                              {[1, 2, 3, 4, 5].map((lvl) => (
+                                <button
+                                  key={lvl}
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...skillInputs];
+                                    updated[sidx].subjective_confidence = lvl;
+                                    setSkillInputs(updated);
+                                  }}
+                                  style={{
+                                    width: '22px',
+                                    height: '22px',
+                                    borderRadius: '3px',
+                                    border: '1px solid',
+                                    borderColor: sk.subjective_confidence === lvl ? 'var(--indigo-500)' : 'var(--border-subtle)',
+                                    background: sk.subjective_confidence === lvl ? 'var(--gradient-brand)' : 'transparent',
+                                    color: sk.subjective_confidence === lvl ? '#fff' : 'var(--text-muted)',
+                                    fontSize: '0.68rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    padding: 0
+                                  }}
+                                >
+                                  {lvl}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </>
             )}
@@ -324,6 +493,24 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
 
             {showServerConfig && (
               <div className="server-config-box">
+                <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectServerPreset('http://localhost:8000/api/v1')}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}
+                  >
+                    Local (localhost:8000)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectServerPreset('https://careerforge-3s9a.onrender.com/api/v1')}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}
+                  >
+                    Cloud (Render live)
+                  </button>
+                </div>
                 <label className="form-label">Active API Base URL:</label>
                 <input
                   type="text"
@@ -335,7 +522,7 @@ export const LoginOnboarding: React.FC<LoginOnboardingProps> = ({ onSuccess }) =
                 <div className="server-status-row">
                   <button
                     type="button"
-                    onClick={testServerConnection}
+                    onClick={() => testServerConnection()}
                     className="btn btn-secondary btn-sm"
                   >
                     Test & Save URL

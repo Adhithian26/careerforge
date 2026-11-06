@@ -103,16 +103,22 @@ export const api = {
   login: async (email: string, password: string) => {
     const data = await request<{ access_token: string; email: string; full_name: string; user_id: string }>(
       '/auth/login',
-      { method: 'POST', body: JSON.stringify({ email, password }) }
+      { method: 'POST', body: JSON.stringify({ email: email.trim().toLowerCase(), password: password.trim() }) }
     );
     authStorage.setToken(data.access_token);
     authStorage.setUser(data);
     return data;
   },
   register: async (payload: any) => {
+    const cleanPayload = {
+      ...payload,
+      email: payload.email ? payload.email.trim().toLowerCase() : payload.email,
+      password: payload.password ? payload.password.trim() : payload.password,
+      full_name: payload.full_name ? payload.full_name.trim() : payload.full_name,
+    };
     const data = await request<{ access_token: string; email: string; full_name: string; user_id: string }>(
       '/auth/register',
-      { method: 'POST', body: JSON.stringify(payload) }
+      { method: 'POST', body: JSON.stringify(cleanPayload) }
     );
     authStorage.setToken(data.access_token);
     authStorage.setUser(data);
@@ -133,6 +139,10 @@ export const api = {
   getSkillMetrics: () => request<SkillMetric[]>('/assessment/metrics'),
   updateConfidence: (topic: string, confidence: number) =>
     request<any>('/assessment/confidence', { method: 'PUT', body: JSON.stringify({ topic, confidence }) }),
+  calibrateSkillMetrics: (metrics: Array<{ topic: string; measured_proficiency: number; subjective_confidence: number }>, regeneratePlan: boolean = false) =>
+    request<any>('/assessment/calibrate', { method: 'POST', body: JSON.stringify({ metrics, regenerate_plan: regeneratePlan }) }),
+  deleteSkillTopic: (topic: string) =>
+    request<any>(`/assessment/topic/${encodeURIComponent(topic)}`, { method: 'DELETE' }),
   getQuestions: (topic: string) => request<AssessmentQuestion[]>(`/assessment/questions/${topic}`),
   submitAssessment: (topic: string, answers: Array<{ question_id: string; selected_option_index: number }>, timeSpent: number) =>
     request<AssessmentResult>('/assessment/submit', {

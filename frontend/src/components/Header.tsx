@@ -52,12 +52,14 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="header-right">
         <div className="header-metric-pill header-metric-pill-hours" title="Daily study time budget">
           <Clock size={15} style={{ color: 'var(--indigo-500)' }} />
-          <span className="pill-text">4h Daily Allocation</span>
+          <span className="pill-text">{currentUser?.profile?.daily_study_hours || 4}h Daily Allocation</span>
         </div>
 
         <div className="header-metric-pill header-metric-pill-track" title="Verified Target Graduation">
           <CheckCircle size={15} style={{ color: 'var(--emerald-500)' }} />
-          <span className="pill-text">2027 SDE Track</span>
+          <span className="pill-text">
+            {currentUser?.profile?.graduation_year || 2027} {currentUser?.profile?.target_roles ? currentUser.profile.target_roles.split(' ')[0] : 'SDE'} Track
+          </span>
         </div>
 
         <button

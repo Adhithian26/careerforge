@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, ShieldCheck, AlertTriangle, CheckCircle2, User, Key } from 'lucide-react';
+import { Settings, Save, ShieldCheck, AlertTriangle, CheckCircle2, User, Key, Sliders } from 'lucide-react';
 import { api } from '../api/client';
 import { UserProfile } from '../types';
+import { PersonalizeMetricsModal } from '../components/PersonalizeMetricsModal';
 
-export const SettingsProfile: React.FC = () => {
+interface SettingsProfileProps {
+  onProfileUpdated?: () => void;
+}
+
+export const SettingsProfile: React.FC<SettingsProfileProps> = ({ onProfileUpdated }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showPersonalizeModal, setShowPersonalizeModal] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -32,6 +38,9 @@ export const SettingsProfile: React.FC = () => {
       setSaving(true);
       await api.updateProfile(profile);
       setSaveSuccess(true);
+      if (onProfileUpdated) {
+        onProfileUpdated();
+      }
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: any) {
       alert(err.message);
@@ -143,11 +152,21 @@ export const SettingsProfile: React.FC = () => {
 
         {/* Subjective Confidence (1-5) */}
         <div className="glass-card">
-          <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--amber-500)' }}>
-            Subjective Confidence Ratings (1 to 5)
-          </h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--amber-500)', margin: 0 }}>
+              Subjective Confidence Ratings (1 to 5)
+            </h4>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setShowPersonalizeModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem' }}
+            >
+              <Sliders size={13} /> Personalize All Skills & Scores (%)
+            </button>
+          </div>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-            Your self-assessment. (DSA is calibrated at 1/5 to ensure intensive array/pointer focus).
+            Your self-assessment. Calibrates baseline topic weightings across the AI coach and daily study curriculum.
           </p>
 
           <div className="grid-3">
@@ -250,6 +269,15 @@ export const SettingsProfile: React.FC = () => {
           Your credentials and API keys are stored exclusively in environment variables and never exposed to client browsers or committed to Git.
         </p>
       </div>
+      <PersonalizeMetricsModal
+        isOpen={showPersonalizeModal}
+        onClose={() => setShowPersonalizeModal(false)}
+        initialMetrics={[]}
+        onMetricsSaved={() => {
+          loadProfile();
+          if (onProfileUpdated) onProfileUpdated();
+        }}
+      />
     </div>
   );
 };

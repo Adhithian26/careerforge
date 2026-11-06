@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Award, Clock, ArrowRight, RotateCcw, AlertCircle, Sliders } from 'lucide-react';
 import { api } from '../api/client';
 import { SkillMetric, AssessmentQuestion, AssessmentResult } from '../types';
+import { PersonalizeMetricsModal } from '../components/PersonalizeMetricsModal';
 
 export const SkillAssessment: React.FC = () => {
   const [topics, setTopics] = useState<string[]>([]);
@@ -15,6 +16,7 @@ export const SkillAssessment: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
+  const [showPersonalizeModal, setShowPersonalizeModal] = useState(false);
 
   const loadData = async () => {
     try {
@@ -324,13 +326,22 @@ export const SkillAssessment: React.FC = () => {
   // Default Overview: All Topics & Confidence Sliders
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-      <div className="glass-card">
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-          Measured Skill Proficiency vs Subjective Confidence
-        </h3>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-          Take topic assessments to verify your true competence. Adjust your subjective confidence ratings to align study priorities.
-        </p>
+      <div className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.35rem' }}>
+            Measured Skill Proficiency vs Subjective Confidence
+          </h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+            Take topic assessments to verify your true competence, or directly personalize your baseline scores and confidence ratings.
+          </p>
+        </div>
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={() => setShowPersonalizeModal(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+        >
+          <Sliders size={14} /> Personalize Metrics
+        </button>
       </div>
 
       <div className="grid-2">
@@ -397,6 +408,17 @@ export const SkillAssessment: React.FC = () => {
           );
         })}
       </div>
+
+      <PersonalizeMetricsModal
+        isOpen={showPersonalizeModal}
+        onClose={() => setShowPersonalizeModal(false)}
+        initialMetrics={metrics.map(m => ({
+          topic: m.topic,
+          measured_proficiency: m.measured_proficiency,
+          subjective_confidence: m.subjective_confidence
+        }))}
+        onMetricsSaved={loadData}
+      />
     </div>
   );
 };

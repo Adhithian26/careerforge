@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, CheckCircle2, Clock, Plus, RefreshCw, AlertCircle, BookOpen } from 'lucide-react';
 import { api } from '../api/client';
-import { StudyPlan, StudyTask } from '../types';
+import { StudyPlan, StudyTask, User } from '../types';
 
-export const StudyPlanner: React.FC = () => {
+interface StudyPlannerProps {
+  currentUser?: User | null;
+}
+
+export const StudyPlanner: React.FC<StudyPlannerProps> = ({ currentUser }) => {
   const [plan, setPlan] = useState<StudyPlan | null>(null);
   const [tasks, setTasks] = useState<StudyTask[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [dailyHours, setDailyHours] = useState<number>(4.0);
+  const [dailyHours, setDailyHours] = useState<number>(currentUser?.profile?.daily_study_hours || 4.0);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [logTimeMinutes, setLogTimeMinutes] = useState<number>(45);
@@ -96,9 +100,9 @@ export const StudyPlanner: React.FC = () => {
               <span className="badge badge-success">Active 7-Day Sprint</span>
               <span className="badge badge-medium">{dailyHours}h Daily Protocol</span>
             </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{plan?.title || '4-Hour Daily Curriculum'}</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{plan?.title || `${dailyHours}-Hour Daily Curriculum`}</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-              Allocates time across DSA (highest priority at 1/5), Python, SQL, Aptitude, Core CS, and Projects.
+              Allocates time across DSA, Python, SQL, Aptitude, Core CS, and Projects based on your {dailyHours}h daily budget.
             </p>
           </div>
 

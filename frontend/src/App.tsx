@@ -115,16 +115,16 @@ export const App: React.FC = () => {
 
         <main className="content-body">
           {activeTab === 'dashboard' && <Dashboard onNavigate={setActiveTab} />}
-          {activeTab === 'coach' && <AiCareerCoach />}
-          {activeTab === 'planner' && <StudyPlanner />}
+          {activeTab === 'coach' && <AiCareerCoach currentUser={currentUser} />}
+          {activeTab === 'planner' && <StudyPlanner currentUser={currentUser} />}
           {activeTab === 'assessment' && <SkillAssessment />}
           {activeTab === 'coding' && <CodingPractice />}
           {activeTab === 'sql' && <SqlPractice />}
-          {activeTab === 'interview' && <MockInterview />}
-          {activeTab === 'jobs' && <JobTracker />}
-          {activeTab === 'resume' && <ResumeAssistant />}
+          {activeTab === 'interview' && <MockInterview currentUser={currentUser} />}
+          {activeTab === 'jobs' && <JobTracker currentUser={currentUser} />}
+          {activeTab === 'resume' && <ResumeAssistant currentUser={currentUser} />}
           {activeTab === 'weekly' && <WeeklyReview />}
-          {activeTab === 'settings' && <SettingsProfile />}
+          {activeTab === 'settings' && <SettingsProfile onProfileUpdated={checkAuth} />}
         </main>
       </div>
     </div>

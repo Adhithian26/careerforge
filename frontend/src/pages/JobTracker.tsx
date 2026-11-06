@@ -12,9 +12,13 @@ import {
   Calendar
 } from 'lucide-react';
 import { api } from '../api/client';
-import { JobApplication, JobPipelineStats } from '../types';
+import { JobApplication, JobPipelineStats, User } from '../types';
 
-export const JobTracker: React.FC = () => {
+interface JobTrackerProps {
+  currentUser?: User | null;
+}
+
+export const JobTracker: React.FC<JobTrackerProps> = ({ currentUser }) => {
   const [jobs, setJobs] = useState<JobApplication[]>([]);
   const [stats, setStats] = useState<JobPipelineStats | null>(null);
   const [approvedSources, setApprovedSources] = useState<any[]>([]);
@@ -25,11 +29,13 @@ export const JobTracker: React.FC = () => {
 
   // New Job Form State
   const [newCompany, setNewCompany] = useState('');
-  const [newRole, setNewRole] = useState('Software Development Engineer');
+  const [newRole, setNewRole] = useState(currentUser?.profile?.target_roles || 'Software Development Engineer');
   const [newUrl, setNewUrl] = useState('');
   const [newLocation, setNewLocation] = useState('Chennai / Bengaluru / Hybrid');
   const [newStatus, setNewStatus] = useState<JobApplication['status']>('planned');
-  const [newEligibility, setNewEligibility] = useState('Eligible: B.Tech AI & Data Science (2027 batch)');
+  const [newEligibility, setNewEligibility] = useState(
+    `Eligible: ${currentUser?.profile?.degree || 'Engineering'} (${currentUser?.profile?.graduation_year || 2027} batch)`
+  );
   const [newDeadline, setNewDeadline] = useState('');
 
   const loadData = async () => {

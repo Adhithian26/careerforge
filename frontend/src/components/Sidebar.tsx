@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'dashboard', label: 'Main Dashboard', icon: LayoutDashboard },
     { id: 'coach', label: 'AI Career Coach', icon: Bot, badge: 'ADK' },
-    { id: 'planner', label: 'Study Planner', icon: Calendar, badge: '4h/day' },
+    { id: 'planner', label: 'Study Planner', icon: Calendar, badge: `${currentUser?.profile?.daily_study_hours || 4}h/day` },
     { id: 'assessment', label: 'Skill Assessment', icon: CheckCircle2 },
     { id: 'coding', label: 'Coding Practice', icon: Code2 },
     { id: 'sql', label: 'SQL Practice', icon: Database },
@@ -48,6 +48,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'settings', label: 'Settings & Profile', icon: Settings },
   ];
 
+  const degreeSnippet = currentUser?.profile?.degree
+    ? `${currentUser.profile.degree.slice(0, 18)} • ${currentUser.profile.graduation_year || 2027}`
+    : (currentUser?.profile?.graduation_year ? `Cohort of ${currentUser.profile.graduation_year}` : 'Autonomous Prep');
+
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`} aria-label="Main Navigation">
       <div className="sidebar-header">
@@ -57,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div className="brand-text">
             <h1>CareerForge AI</h1>
-            <span>B.Tech AI & DS • 2027</span>
+            <span>{degreeSnippet}</span>
           </div>
         </div>
         <button
@@ -96,11 +100,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="sidebar-footer">
         <div className="user-mini-card">
           <div className="user-avatar">
-            {currentUser?.full_name ? currentUser.full_name[0].toUpperCase() : 'A'}
+            {currentUser?.full_name ? currentUser.full_name[0].toUpperCase() : 'U'}
           </div>
           <div className="user-details">
-            <div className="name">{currentUser?.full_name || 'Adhithian S'}</div>
-            <div className="target">Target: SDE 2027</div>
+            <div className="name">{currentUser?.full_name || 'Student'}</div>
+            <div className="target">
+              Target: {currentUser?.profile?.target_roles ? currentUser.profile.target_roles.split(' ')[0] : 'SDE'} {currentUser?.profile?.graduation_year || 2027}
+            </div>
           </div>
         </div>
         <button

@@ -1,24 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Send, Sparkles, User as UserIcon, RefreshCw } from 'lucide-react';
 import { api } from '../api/client';
+import { User } from '../types';
 
-export const AiCareerCoach: React.FC = () => {
+interface AiCareerCoachProps {
+  currentUser?: User | null;
+}
+
+export const AiCareerCoach: React.FC<AiCareerCoachProps> = ({ currentUser }) => {
+  const degree = currentUser?.profile?.degree || 'B.Tech AI & Data Science';
+  const gradYear = currentUser?.profile?.graduation_year || 2027;
+  const hours = currentUser?.profile?.daily_study_hours || 4;
+  const targetRole = currentUser?.profile?.target_roles || 'Software Development Engineer';
+  const companies = currentUser?.profile?.preferred_companies || 'Zoho, TCS, Amazon';
+  const firstCompany = companies.split(',')[0].trim() || 'Tier-1 Tech';
+  const userName = currentUser?.full_name ? `, ${currentUser.full_name}` : '';
+
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'coach'; text: string; agent?: string }>>([
     {
       role: 'coach',
-      text: `### 🎯 Greetings! I am your CareerForge AI Coach.\n\nI am configured for your exact goal: securing a Software Development Engineer role before your **2027 B.Tech AI & Data Science graduation**, optimizing your **4 daily study hours**, and leveling up your DSA (currently 1/5) and core competencies.\n\nHow can I accelerate your preparation today?`,
+      text: `### 🎯 Greetings${userName}! I am your CareerForge AI Coach.\n\nI am calibrated for your exact goal: securing a **${targetRole}** role before your **${gradYear} ${degree}** graduation, optimizing your **${hours} daily study hours**, and targeting **${companies}**.\n\nHow can I accelerate your preparation today?`,
       agent: 'Career Coach (Google ADK / Gemini)'
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
-  const [quickPrompts] = useState([
-    "How should I split my 4 hours daily between DSA, Python, and SQL?",
-    "Why is Two Pointers better than a brute force O(N^2) search on sorted arrays?",
-    "What deep-dive questions will interviewers ask about my RAG Chatbot project?",
-    "What are the specific technical rounds at Zoho vs Amazon SDE?",
-    "How do I explain my long-term goal of industry experience leading to academia?"
-  ]);
+
+  const quickPrompts = [
+    `How should I split my ${hours} hours daily between DSA, Python, and SQL?`,
+    `What are the specific technical rounds at ${firstCompany} for ${targetRole}?`,
+    `Why is Two Pointers better than a brute force O(N^2) search on sorted arrays?`,
+    `What deep-dive architectural questions will interviewers ask about my portfolio?`,
+    `What are the top milestones I should achieve before ${gradYear}?`
+  ];
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -89,7 +103,7 @@ export const AiCareerCoach: React.FC = () => {
             <div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>Career Coach Agent (Google ADK)</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Gemini Orchestrated • Context: B.Tech AI & DS '27 • 4h/day • SDE Placements
+                Gemini Orchestrated • Context: {degree} '{String(gradYear).slice(-2)} • {hours}h/day • {targetRole}
               </p>
             </div>
           </div>

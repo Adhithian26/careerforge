@@ -141,17 +141,23 @@ def get_dashboard_summary(
     if sql_passed == 0:
         recommended_steps.append("Execute your first SQL query on the relational sandbox (Department JOINs).")
     if pipeline_stats["total"] == 0:
-        recommended_steps.append("Log your target companies (Zoho, TCS, Amazon) in the Job Tracker.")
+        target_comps = profile.preferred_companies if profile and profile.preferred_companies else "Zoho, TCS, Amazon"
+        recommended_steps.append(f"Log your target companies ({target_comps}) in the Job Tracker.")
 
     return {
         "user": {
             "name": current_user.full_name,
             "degree": profile.degree if profile else "B.Tech AI & Data Science",
             "graduation_year": profile.graduation_year if profile else 2027,
-            "daily_study_hours": profile.daily_study_hours if profile else 4
+            "daily_study_hours": profile.daily_study_hours if profile else 4,
+            "target_roles": profile.target_roles if profile else "Software Development Engineer",
+            "preferred_companies": profile.preferred_companies if profile else "Zoho, TCS, Amazon",
+            "career_goals": profile.career_goals if profile else "Industry Experience & Engineering Mastery",
+            "existing_projects": profile.existing_projects if profile else "Technical Portfolio Projects"
         },
         "today_plan": {
             "date": today.isoformat(),
+            "daily_allocated_hours": profile.daily_study_hours if profile else 4,
             "tasks": today_tasks_data,
             "total_tasks": len(today_tasks_data),
             "completed_tasks": sum(1 for t in today_tasks_data if t["status"] == "completed")

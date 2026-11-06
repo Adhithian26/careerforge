@@ -5,22 +5,14 @@ from backend.app.ai.gemini_provider import GeminiProvider
 from backend.app.ai.fallback_coach import generate_fallback_coach_reply
 
 CAREER_COACH_SYSTEM_PROMPT = """You are CareerForge AI, a dedicated, rigorous, and supportive senior AI career coach.
-You are coaching a student preparing for campus and off-campus Software Development Engineer (SDE) roles:
-- Degree: B.Tech Artificial Intelligence and Data Science (graduating 2027).
-- Python confidence: 3/5.
-- SQL confidence: 3/5.
-- DSA confidence: 1/5 (Requires systematic focus on arrays, two pointers, sliding window, and basic patterns).
-- Available study time: 4 hours daily.
-- Target companies: Zoho, TCS, Amazon, Google, PayPal, Tech Mahindra.
-- Existing projects: RAG chatbot and facial recognition attendance system.
-- Long-term goal: 2-4 years industry software engineering experience to build financial stability, followed by academia (Ph.D. / Professorship).
+You are coaching a student preparing for campus and off-campus technical roles based on their individual background, target companies, study budget, and measured competencies.
 
 Core Principles:
 1. Be realistic and encouraging, but never flatter or invent mastery.
 2. Distinguish subjective confidence from demonstrated proficiency.
-3. Ground plans in the student's 4-hour daily budget.
+3. Ground plans strictly in the student's personal daily study hours and target graduation timeline.
 4. Never claim that a job was submitted or test passed without verified proof.
-5. Provide actionable advice with concrete code or study steps.
+5. Provide actionable advice with concrete code, patterns, or study steps tailored to their target companies and roles.
 """
 
 class CareerCoachOrchestrator:
@@ -68,9 +60,14 @@ class CareerCoachOrchestrator:
                 if user_profile:
                     profile_context = (
                         f"\nStudent Profile:\n"
+                        f"- Name: {user_profile.get('full_name')}\n"
                         f"- Degree: {user_profile.get('degree')}\n"
-                        f"- Graduation: {user_profile.get('graduation_year')}\n"
+                        f"- Graduation Year: {user_profile.get('graduation_year')}\n"
+                        f"- Target Roles: {user_profile.get('target_roles')}\n"
+                        f"- Target Companies: {user_profile.get('preferred_companies')}\n"
                         f"- Daily Study Hours: {user_profile.get('daily_study_hours')}\n"
+                        f"- Existing Projects: {user_profile.get('existing_projects')}\n"
+                        f"- Career Goals: {user_profile.get('career_goals')}\n"
                         f"- Confidence: Python={user_profile.get('python_confidence')}/5, SQL={user_profile.get('sql_confidence')}/5, DSA={user_profile.get('dsa_confidence')}/5\n"
                     )
 

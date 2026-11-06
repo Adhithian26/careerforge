@@ -84,13 +84,23 @@ def generate_weekly_study_plan(
     # Deactivate any previous active plans
     db.query(StudyPlan).filter(StudyPlan.user_id == user_id, StudyPlan.is_active == True).update({"is_active": False})
     
+    user = db.query(User).filter(User.id == user_id).first()
+    profile = user.profile if user else None
+    target_role = profile.target_roles if profile and profile.target_roles else "SDE"
+    grad_year = profile.graduation_year if profile and profile.graduation_year else 2027
+    projects = [p.strip() for p in (profile.existing_projects or "").split(",") if p.strip()] if profile else []
+    proj1 = projects[0] if len(projects) > 0 else "Technical Project"
+    proj2 = projects[1] if len(projects) > 1 else (projects[0] if len(projects) > 0 else "Core Portfolio Project")
+    pref_comps = profile.preferred_companies if profile and profile.preferred_companies else "Target Tech Companies"
+    comps_short = " & ".join([c.strip() for c in pref_comps.split(",")[:2] if c.strip()]) or "Target Companies"
+
     plan = StudyPlan(
         user_id=user_id,
-        title=f"7-Day SDE Mastery Sprint ({start_date.strftime('%b %d')} - {end_date.strftime('%b %d, %Y')})",
+        title=f"7-Day {target_role} Mastery Sprint ({start_date.strftime('%b %d')} - {end_date.strftime('%b %d, %Y')})",
         start_date=start_date,
         end_date=end_date,
         daily_allocated_hours=daily_hours,
-        focus_objective=focus_objective or "Master DSA Arrays/Pointers, strengthen SQL aggregations, and prepare SDE campus interview profiles.",
+        focus_objective=focus_objective or f"Master fundamental coding patterns, databases, and core concepts for {target_role} ({grad_year} cohort).",
         is_active=True
     )
     db.add(plan)
@@ -101,17 +111,32 @@ def generate_weekly_study_plan(
         task_date = start_date + timedelta(days=day_offset)
         for t in day_tasks:
             # Scale duration if daily_hours is customized
-            scaled_duration = int(t["duration_minutes"] * (daily_hours / 4.0))
+            scaled_duration = max(15, int(t["duration_minutes"] * (daily_hours / 4.0)))
+            title = t["title"]
+            notes = t["notes"]
+
+            if "RAG Chatbot" in title or "Project Prep" in title and day_offset == 0:
+                title = f"Project Prep: {proj1} Architecture & Code Documentation"
+                notes = f"Document module hierarchy, trade-offs, and key algorithms of {proj1} in portfolio README."
+            elif "Facial Recognition" in title or "Project Prep" in title and day_offset == 2:
+                title = f"Project Prep: {proj2} System Architecture & Edge Cases"
+                notes = f"Prepare technical explanations for scaling bottlenecks, edge cases, and testing in {proj2}."
+            elif "Zoho & TCS" in title:
+                title = f"Job Search: Research {comps_short} Eligibility Criteria"
+                notes = f"Review hiring process and log target openings for {comps_short} in Job Tracker."
+            elif "Amazon SDE" in notes:
+                notes = f"Use Resume Assistant to match keywords against {comps_short} {target_role} job descriptions."
+
             task = StudyTask(
                 plan_id=plan.id,
                 user_id=user_id,
                 scheduled_date=task_date,
-                title=t["title"],
+                title=title,
                 topic=t["topic"],
                 duration_minutes=scaled_duration,
                 priority=t["priority"],
                 status="pending",
-                notes=t["notes"]
+                notes=notes
             )
             db.add(task)
 

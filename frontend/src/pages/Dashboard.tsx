@@ -10,9 +10,11 @@ import {
   Clock,
   ArrowRight,
   ShieldCheck,
-  Award
+  Award,
+  Sliders
 } from 'lucide-react';
 import { api } from '../api/client';
+import { PersonalizeMetricsModal } from '../components/PersonalizeMetricsModal';
 
 interface DashboardProps {
   onNavigate: (tab: string) => void;
@@ -22,6 +24,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showPersonalizeModal, setShowPersonalizeModal] = useState(false);
 
   const fetchDashboard = async () => {
     try {
@@ -81,14 +84,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
-              <span className="badge badge-success">Target: Class of 2027</span>
-              <span className="badge badge-medium">4 Hours Daily</span>
+              <span className="badge badge-success">Target: Class of {data.user.graduation_year || 2027}</span>
+              <span className="badge badge-medium">{data.user.daily_study_hours || 4} Hours Daily</span>
             </div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
               Welcome back, {data.user.name}
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '650px' }}>
-              {data.user.degree} • Target: SDE at Zoho, TCS, Amazon, PayPal • Goal: Industry Experience then Professorship
+              {data.user.degree} • Target: {data.user.target_roles || 'SDE'} at {data.user.preferred_companies || 'Target Companies'} • Goal: {data.user.career_goals || 'Industry Mastery'}
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -119,7 +122,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
           <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
             {today_plan.total_tasks > 0 && today_plan.completed_tasks === today_plan.total_tasks
-              ? '🎉 All 4 hours completed today!'
+              ? `🎉 All ${data.user.daily_study_hours || 4} hours completed today!`
               : `${today_plan.total_tasks - today_plan.completed_tasks} tasks remaining today`}
           </p>
         </div>
@@ -186,7 +189,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="glass-card-header">
             <div className="card-title">
               <Calendar size={18} style={{ color: 'var(--indigo-500)' }} />
-              <span>Today's Study Plan (4 Hours)</span>
+              <span>Today's Study Plan ({today_plan?.daily_allocated_hours || data?.user?.daily_study_hours || 4} Hours)</span>
             </div>
             <button className="btn btn-secondary btn-sm" onClick={() => onNavigate('planner')}>
               Manage Plan
@@ -260,21 +263,62 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               <Award size={18} style={{ color: 'var(--emerald-500)' }} />
               <span>Skill Level (Measured vs Subjective)</span>
             </div>
-            <button className="btn btn-secondary btn-sm" onClick={() => onNavigate('assessment')}>
-              Take Assessment
-            </button>
+            <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowPersonalizeModal(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                title="Input your real scores and confidence for each skill"
+              >
+                <Sliders size={13} /> Personalize Metrics
+              </button>
+              <button className="btn btn-secondary btn-sm" onClick={() => onNavigate('assessment')}>
+                Take Assessment
+              </button>
+            </div>
           </div>
 
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-            Calculated from deterministic assessments. Distinguishes subjective confidence from verified score.
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+            Calculated from your inputs & verified assessments. Click any metric to calibrate.
           </p>
+
+          {/* Quick Personalize Callout */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.55rem 0.85rem',
+            borderRadius: 'var(--radius-sm)',
+            background: 'rgba(99, 102, 241, 0.08)',
+            border: '1px solid rgba(99, 102, 241, 0.25)',
+            marginBottom: '0.85rem',
+            fontSize: '0.78rem'
+          }}>
+            <span style={{ color: 'var(--text-secondary)' }}>
+              Want to calibrate your actual skill levels?
+            </span>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowPersonalizeModal(true)}
+              style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+            >
+              <Sliders size={12} /> Set My Real Scores
+            </button>
+          </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {skill_scores.map((s: any) => {
               const proficiency = s.measured_proficiency || 0;
               const color = proficiency >= 70 ? 'var(--emerald-500)' : proficiency >= 50 ? 'var(--amber-500)' : 'var(--rose-500)';
               return (
-                <div key={s.topic}>
+                <div
+                  key={s.topic}
+                  onClick={() => setShowPersonalizeModal(true)}
+                  title={`Click to personalize ${s.topic} score or confidence`}
+                  style={{ cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', transition: 'background 0.2s' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.25rem' }}>
                     <span style={{ fontWeight: 600 }}>{s.topic}</span>
                     <span>
@@ -393,6 +437,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+
+      <PersonalizeMetricsModal
+        isOpen={showPersonalizeModal}
+        onClose={() => setShowPersonalizeModal(false)}
+        initialMetrics={skill_scores}
+        onMetricsSaved={fetchDashboard}
+      />
     </div>
   );
 };
